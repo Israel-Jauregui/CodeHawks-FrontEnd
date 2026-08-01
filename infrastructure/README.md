@@ -20,29 +20,28 @@ There are no EC2 instances, NAT gateways, load balancers, or long-lived AWS cred
 ## Prerequisites
 
 1. Enable MFA on the AWS root user and create an administrative IAM Identity Center permission set for setup work.
-2. Install Terraform 1.10+, AWS CLI v2, GitHub CLI, and `jq`.
-3. Authenticate locally with `aws configure sso` / `aws sso login` and `gh auth login`.
+2. Install Terraform 1.10+, GitHub CLI, and `jq` for local validation and GitHub administration. A local AWS CLI/profile is intentionally not used.
+3. Authenticate only to GitHub with `gh auth login`.
 4. Create a Cloudflare API token restricted to **Zone Read** and **DNS Edit** for `codehawks.org` and copy the zone ID from the Cloudflare dashboard.
 5. Use the existing public `Israel-Jauregui/CodeHawks-FrontEnd` repository. Application code remains at the repository root and all Terraform stays in `infrastructure/`.
 
+## AWS mutation policy
+
+Agents and developer machines must not run `terraform apply`, `terraform destroy`, or mutating AWS CLI commands. All ongoing AWS changes run in GitHub Actions using short-lived OIDC sessions and an owner-reviewed environment. This rule is duplicated in the repository's `AGENTS.md` so future agents see it before making changes.
+
 ## 1. Bootstrap state and GitHub OIDC
 
-The bootstrap is the only apply performed with your local administrator session. It creates the private state bucket, GitHub OIDC provider, permissions boundary, and infrastructure workflow role.
+GitHub cannot use OIDC until AWS trusts GitHub, so one human-owned bootstrap action is unavoidable. The initial setup is a versioned CloudFormation stack rather than undocumented console clicks or local CLI commands:
 
-```sh
-cd bootstrap
-terraform init -backend=false
-terraform apply
-```
+1. Sign in to the AWS console as the administrative setup identity.
+2. Open **CloudFormation → Create stack → With new resources** in `us-east-1`.
+3. Upload `infrastructure/bootstrap/template.yaml` from this repository.
+4. Name the stack `codehawks-bootstrap`, keep the default GitHub parameters, acknowledge named IAM resources, and create it.
+5. Copy the stack outputs `TerraformStateBucketName` and `InfrastructureRoleArn` into the GitHub variables described below.
 
-Record the outputs, then migrate the bootstrap state into its new bucket:
+The stack creates the private/versioned Terraform state bucket, GitHub OIDC provider, permissions boundary, and infrastructure workflow role. The template is the source of truth, and retained resources prevent accidental state loss.
 
-```sh
-state_bucket="$(terraform output -raw terraform_state_bucket)"
-terraform init -migrate-state -backend-config="bucket=${state_bucket}"
-```
-
-Do not commit local state. Both the state bucket and permissions boundary have `prevent_destroy` enabled.
+After this initial console creation, use only the manual, owner-approved **Update AWS bootstrap** GitHub workflow for template updates. Never create GitHub AWS access-key secrets.
 
 ## 2. Configure the infrastructure environment
 
@@ -50,8 +49,8 @@ Create a GitHub `infrastructure-production` environment with `Israel-Jauregui` a
 
 Environment variables:
 
-- `AWS_ROLE_ARN`: bootstrap output `infrastructure_role_arn`
-- `TF_STATE_BUCKET`: bootstrap output `terraform_state_bucket`
+- `AWS_ROLE_ARN`: CloudFormation output `InfrastructureRoleArn`
+- `TF_STATE_BUCKET`: CloudFormation output `TerraformStateBucketName`
 - `CLOUDFLARE_ZONE_ID`: the Cloudflare zone ID
 - `ENABLE_FLAT_RATE_WAF`: `false` while the AWS account uses its Free account plan
 
@@ -101,4 +100,4 @@ Rollback by reverting the frontend commit on `main` and approving the resulting 
 
 ## Destruction safety
 
-CloudFront and both S3 buckets are protected against accidental Terraform destruction. A deliberate teardown must first cancel any CloudFront flat-rate plan in the AWS console, empty all object versions, remove `prevent_destroy`, and then destroy the stacks. Never delete the state bucket before all other resources are gone.
+CloudFront and the site bucket use Terraform `prevent_destroy`; the CloudFormation state bucket and permissions boundary use `DeletionPolicy: Retain`. A deliberate teardown must first cancel any CloudFront flat-rate plan in the AWS console, empty object versions, explicitly remove those guards through reviewed code, and use the approved workflows. Never delete the state bucket before every Terraform-managed resource is gone.

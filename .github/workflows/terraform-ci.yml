@@ -34,6 +34,11 @@ jobs:
       - name: Check formatting
         run: terraform fmt -check -recursive
 
+      - name: Validate CloudFormation bootstrap
+        run: |
+          python -m pip install --disable-pip-version-check cfn-lint==1.53.3
+          cfn-lint bootstrap/template.yaml
+
       - name: Initialize without remote state
         run: terraform init -backend=false
 
