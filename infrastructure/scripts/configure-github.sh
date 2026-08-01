@@ -12,7 +12,7 @@ configure_environment() {
 
   jq -n \
     --argjson reviewer_id "$reviewer_id" \
-    '{wait_timer: 0, prevent_self_review: false, reviewers: [{type: "User", id: $reviewer_id}], deployment_branch_policy: {protected_branches: false, custom_branch_policies: true}}' \
+    '{wait_timer: 0, prevent_self_review: false, can_admins_bypass: false, reviewers: [{type: "User", id: $reviewer_id}], deployment_branch_policy: {protected_branches: false, custom_branch_policies: true}}' \
     | gh api --method PUT "repos/${full_name}/environments/${environment}" --input - >/dev/null
 
   if ! gh api "repos/${full_name}/environments/${environment}/deployment-branch-policies" \
