@@ -1,0 +1,101 @@
+.xp-signup-modal {
+  min-width: 380px;
+  max-width: 96vw;
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), 0 1.5px 0 #fff inset;
+  border-radius: 6px;
+  overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.xp-signup-modal .window-body {
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  background: #eaf3ff;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* Custom scrollbar for XP window body to look a bit retro */
+.xp-signup-modal .window-body::-webkit-scrollbar {
+  width: 16px;
+}
+.xp-signup-modal .window-body::-webkit-scrollbar-track {
+  background: #eaf3ff;
+  border-left: 1px solid #aca899;
+}
+.xp-signup-modal .window-body::-webkit-scrollbar-thumb {
+  background: #c3daf9;
+  border: 1px solid #7eb1f2;
+  border-radius: 2px;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.signup-form label {
+  font-size: 1rem;
+  color: #222;
+  font-family: Tahoma, 'Microsoft Sans Serif', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.signup-form input[type="text"],
+.signup-form input[type="email"],
+.signup-form input[type="password"],
+.signup-form input[type="file"],
+.signup-form textarea {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1.5px solid #316ac5;
+  border-radius: 3px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+  margin-top: 0.3rem;
+  box-sizing: border-box;
+}
+
+.signup-form input[type="file"] {
+  padding: 0.2rem;
+  background: #fff;
+  font-size: 0.9rem;
+}
+
+.signup-form input:disabled,
+.signup-form textarea:disabled {
+  background: #f3f3f3;
+  color: #888;
+}
+
+.signup-form textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.signup-actions {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 0.5rem;
+}
+
+.signup-error {
+  color: #b22222;
+  background: #fff0f0;
+  border: 1px solid #b22222;
+  border-radius: 3px;
+  padding: 0.3rem 0.7rem;
+  margin-top: -0.7rem;
+  font-size: 0.97rem;
+}
+.signup-success {
+  color: #006400;
+  background: #eaffea;
+  border: 1px solid #006400;
+  border-radius: 3px;
+  padding: 0.3rem 0.7rem;
+  margin-top: -0.7rem;
+  font-size: 0.97rem;
+}

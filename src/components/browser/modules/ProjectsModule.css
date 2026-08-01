@@ -1,0 +1,208 @@
+.projects-module {
+  background: #f3f8ff;
+  border: 3px solid #316ac5;
+  box-shadow: 0 4px 20px rgba(49, 106, 197, 0.18), 0 0 0 4px #fff inset;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.projects-module__title {
+  margin: 0;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+  color: #003399;
+  font-size: 1.5rem;
+  text-shadow: 0 1px 0 #fff;
+}
+
+.projects-module__subtitle {
+  margin: 8px 0 14px;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+  color: #222;
+}
+
+.projects-module__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.projects-module__button {
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+  font-size: 0.92rem;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(180deg, #3d8bfd 0%, #316ac5 100%);
+  border: 1px solid #003399;
+  border-radius: 3px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.projects-module__button:hover {
+  background: linear-gradient(180deg, #5c9cff 0%, #2f63bc 100%);
+}
+
+.projects-module__button:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.projects-module__feedback,
+.projects-module__form-wrapper {
+  background: #fff;
+  border: 2px solid #316ac5;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px #316ac522;
+  padding: 12px 14px;
+  margin: 10px 0;
+}
+
+.projects-module__feedback legend,
+.projects-module__form-wrapper legend {
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+  color: #003399;
+  font-weight: bold;
+  padding: 0 8px;
+}
+
+.projects-module__feedback p {
+  margin: 2px 0;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+}
+
+.projects-module__feedback--error {
+  border-color: #8f2f2f;
+  background: #fff7f7;
+}
+
+.projects-module__feedback--success {
+  border-color: #2f6f2f;
+  background: #f4fff4;
+}
+
+.projects-module__form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px 14px;
+}
+
+.projects-module__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+  font-size: 0.9rem;
+  color: #1d1d1d;
+}
+
+.projects-module__field input,
+.projects-module__field textarea {
+  background: #fff;
+  border: 1px solid #7f9db9;
+  color: #000;
+  padding: 4px;
+}
+
+.projects-module__field textarea {
+  resize: vertical;
+}
+
+.projects-module__field--full-width {
+  grid-column: 1 / -1;
+}
+
+.projects-module__lookup-hint {
+  margin: 2px 0 0;
+  color: #2f5f91;
+  font-size: 0.82rem;
+}
+
+.projects-module__lookup-results {
+  border: 1px solid #7f9db9;
+  border-radius: 3px;
+  background: #fff;
+  max-height: 150px;
+  overflow: auto;
+}
+
+.projects-module__lookup-item {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #e2e7ef;
+  background: #fff;
+  color: #111;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.projects-module__lookup-item:last-child {
+  border-bottom: 0;
+}
+
+.projects-module__lookup-item:hover {
+  background: #eef5ff;
+}
+
+.projects-module__lookup-username {
+  color: #2f5f91;
+  font-size: 0.82rem;
+}
+
+.projects-module__invite-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.projects-module__invite-pill {
+  border: 1px solid #316ac5;
+  border-radius: 999px;
+  background: #ebf3ff;
+  color: #173c72;
+  font-size: 0.8rem;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.projects-module__card-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.projects-module__join-message {
+  margin: 0;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+  font-size: 0.82rem;
+  color: #1f4f86;
+}
+
+.projects-module__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.projects-module__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 18px 20px;
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .projects-module {
+    padding: 12px;
+  }
+
+  .projects-module__list {
+    grid-template-columns: 1fr;
+  }
+}

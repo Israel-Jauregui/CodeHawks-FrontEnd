@@ -1,0 +1,77 @@
+name: Deploy frontend
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-frontend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - name: Checkout approved revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify and build
+        run: |
+          npm run lint
+          npm run build
+
+      - name: Validate deployment configuration
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          test -n "$AWS_ROLE_ARN"
+          test -n "$S3_BUCKET"
+          test -n "$CLOUDFRONT_DISTRIBUTION_ID"
+
+      - name: Get short-lived AWS credentials
+        uses: aws-actions/configure-aws-credentials@cabfdba3510de1431bac9dba27511d97497fc100 # v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: codehawks-frontend-${{ github.run_id }}
+
+      - name: Upload versioned assets
+        env:
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+        run: >-
+          aws s3 sync dist/assets/ "s3://$S3_BUCKET/assets/"
+          --delete
+          --cache-control "public,max-age=31536000,immutable"
+
+      - name: Upload entrypoint and public files
+        env:
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+        run: >-
+          aws s3 sync dist/ "s3://$S3_BUCKET/"
+          --delete
+          --exclude "assets/*"
+          --cache-control "public,max-age=0,must-revalidate"
+
+      - name: Refresh CloudFront
+        env:
+          DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"

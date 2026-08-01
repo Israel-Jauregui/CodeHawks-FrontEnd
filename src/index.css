@@ -1,0 +1,46 @@
+/*
+ * Global resets & base styles for the XP-themed app.
+ * xp.css handles most of the visual styling — this file only provides
+ * foundational layout resets and minimal overrides that xp.css doesn't cover.
+ */
+
+/* ── Reset ────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  /*
+   * ── 8-Bit Bliss Background ──
+   * A tileable pixel art SVG that recreates the iconic Windows XP
+   * "Bliss" rolling green hills. The SVG is a 64x48 pixel grid
+   * (viewBox 512x384) scaled up to 512x384 CSS pixels so each
+   * "art pixel" renders at 8x8 real pixels — giving a chunky retro look.
+   *
+   * `image-rendering: pixelated` (+ `crisp-edges` for Firefox) tells
+   * the browser NOT to anti-alias when scaling, preserving hard pixel
+   * edges exactly like an old bitmap wallpaper.
+   */
+  background: url('/bliss-8bit.svg') repeat;
+  background-size: 512px 384px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges; /* Firefox fallback */
+
+  font-family: "Tahoma", "MS Sans Serif", "Segoe UI", sans-serif;
+}
+
+/* ── Links ────────────────────────────────────────────────────────── */
+a {
+  color: #0055e5;
+  text-decoration: underline;
+}
+
+a:hover {
+  color: #0033a0;
+}

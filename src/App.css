@@ -1,0 +1,8 @@
+/*
+ * App-level layout.
+ * Keeps the root container centered and full-width.
+ */
+#root {
+  width: 100%;
+  min-height: 100vh;
+}

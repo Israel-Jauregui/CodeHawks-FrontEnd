@@ -1,0 +1,1457 @@
+/* ═══════════════════════════════════════════════════════════════════
+ * EVENTS SECTION HEADING INTERACTION
+ * Hover enlarges the text for clear affordance, and active adds a
+ * slight "press" feel so interaction feels tactile.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+
+.events-splash-animate {
+  display: inline-block;
+  transform-origin: left center;
+  will-change: transform;
+  cursor: pointer;
+  transform: scale(1);
+  transition:
+    transform 0.3s cubic-bezier(.22,.85,.3,1.15),
+    color 0.14s ease-out,
+    text-shadow 0.14s ease-out;
+}
+
+.events-splash-animate:hover {
+  transform: scale(1.16);
+  color: #d78500;
+  text-shadow: 0 1px 0 #fff, 0 0 6px #fff3a1, 0 2px 8px #316ac544;
+}
+
+.events-splash-animate:active {
+  transform: scale(1.11);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .events-splash-animate {
+    transition:
+      transform 0.2s ease-out,
+      color 0.14s ease-out,
+      text-shadow 0.14s ease-out;
+  }
+}
+/* ═══════════════════════════════════════════════════════════════════
+ * EVENTS SECTION — HIGH VISIBILITY
+ *
+ * This section is visually bold, XP-styled, and designed to draw user attention.
+ * - Large blue XP border and shadow
+ * - Distinct background
+ * - Iconic XP calendar icon
+ * - Responsive and accessible
+ * ═══════════════════════════════════════════════════════════════════ */
+.events-section {
+  background: #eaf3ff;
+  border: 3px solid #316ac5;
+  box-shadow: 0 4px 24px 0 rgba(49,106,197,0.18), 0 0 0 4px #fff inset;
+  border-radius: 8px;
+  margin: 32px 0 40px 0;
+  padding: 24px 16px 24px 16px !important;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.events-section .section-heading {
+  font-size: 20px;
+  color: #003399;
+  text-shadow: 1px 2px 0 #fff, 0 2px 8px #316ac544;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* XP Calendar Icon */
+.xp-calendar-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-block;
+  background: none;
+}
+
+.events-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 20px 32px;
+  justify-items: stretch;
+}
+
+.event-card {
+  background: #fff;
+  border: 2.5px solid #316ac5;
+  border-radius: 6px;
+  box-shadow: 0 2px 12px 0 #316ac522, 0 0 0 2px #ece9d8 inset;
+  width: 100%;
+  max-width: 600px;
+  min-width: 0;
+
+@media (min-width: 1100px) {
+  .events-section {
+    max-width: 1600px;
+  }
+  .events-list {
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 32px 48px;
+  }
+  .event-card {
+    max-width: 700px;
+  }
+}
+  padding: 14px 18px 12px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: auto;
+  position: relative;
+  transition: transform 0.12s cubic-bezier(.4,1.7,.7,1.01), box-shadow 0.12s;
+}
+.event-card:hover {
+  transform: scale(1.035);
+  box-shadow: 0 6px 32px 0 #316ac555, 0 0 0 2px #ece9d8 inset;
+  z-index: 3;
+}
+.event-card legend {
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 15px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(90deg, #316ac5 60%, #7ec8ff 100%);
+  border-radius: 4px;
+  padding: 2px 16px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px #316ac533;
+  border: 1.5px solid #003399;
+  letter-spacing: 1px;
+}
+.event-details h3 {
+  font-size: 1.18rem;
+  color: #003399;
+  margin: 0 0 6px 0;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-weight: bold;
+  text-shadow: 0 1px 0 #fff, 0 2px 8px #316ac522;
+}
+.event-details p {
+  font-size: 1rem;
+  color: #222;
+  margin: 0 0 10px 0;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+}
+.event-time {
+  display: inline-block;
+  font-size: 0.98rem;
+  color: #003399;
+  background: #eaf3ff;
+  border: 1.5px solid #316ac5;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 2px 10px;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  margin-top: 2px;
+  box-shadow: 0 1px 4px #316ac533;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * PROJECTS SECTION — XP CONSISTENT CARD GRID
+ * ═══════════════════════════════════════════════════════════════════ */
+/*
+ * Homepage.css
+ *
+ * All styles for the Homepage component, themed to match Windows XP Luna.
+ * xp.css handles window frames, fieldsets, buttons, title bars, and
+ * status bars. This file covers:
+ *   - XP desktop surface and desktop icons
+ *   - Crisp window edge overrides (no border-radius, no antialiasing)
+ *   - Nested terminal window styling
+ *   - Section layouts & backgrounds
+ *   - Responsive breakpoints
+ *
+ * ── XP Luna Palette Reference ──
+ *   Window bg:     #fff
+ *   Silver/gray:   #ece9d8
+ *   Border gray:   #aca899
+ *   Blue accent:   #316ac5
+ *   Dark blue:     #003399
+ *   Text:          #000
+ */
+
+/* ═══════════════════════════════════════════════════════════════════
+ * XP DESKTOP SURFACE
+ *
+ * The outermost container that fills the viewport and acts as the
+ * Windows XP desktop. The Bliss wallpaper is on <body> (index.css),
+ * so this container is transparent — the hills show through.
+ * Desktop icons and the browser window sit on top of this surface.
+ *
+ * `position: relative` creates a positioning context so the desktop
+ * icons (which use absolute positioning) stay within bounds.
+ * ═══════════════════════════════════════════════════════════════════ */
+.xp-desktop {
+  --desktop-icon-gutter: 136px;
+  --xp-taskbar-height: 42px;
+  position: relative;
+  min-height: 100vh;
+  padding: 8px 8px calc(var(--xp-taskbar-height) + 10px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * DESKTOP ICONS
+ *
+ * XP arranged desktop icons in a column-first grid: icons flow
+ * top-to-bottom, then wrap to the next column to the right. We
+ * replicate this with CSS Grid using `grid-auto-flow: column`.
+ *
+ * Each icon is a <button> with:
+ *   - A CSS-only icon graphic (globe or folder)
+ *   - A white text label with dark drop shadow (XP style)
+ *
+ * Icons are positioned in the top-left corner, matching XP's default
+ * icon placement.
+ * ═══════════════════════════════════════════════════════════════════ */
+.desktop-icons {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  grid-template-rows: repeat(8, auto);
+  grid-auto-flow: column;
+  gap: 8px;
+  z-index: 1;
+}
+
+/* ── Individual Desktop Icon ─────────────────────────────────────── */
+.desktop-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 72px;
+  padding: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: default;
+  box-shadow: none;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Focus state: XP shows a dotted focus rectangle */
+.desktop-icon:focus {
+  outline: 1px dotted #fff;
+  outline-offset: -1px;
+}
+
+/* Selected/active state: blue highlight like XP's icon selection */
+.desktop-icon:active .desktop-icon__label,
+.desktop-icon:focus .desktop-icon__label {
+  background: #316ac5;
+  color: #fff;
+}
+
+/* ── Icon Image Container ────────────────────────────────────────── */
+.desktop-icon__img {
+  width: 48px;
+  height: 48px;
+  position: relative;
+  /* Crisp rendering — prevents the browser from anti-aliasing our
+     hard pixel edges, keeping the retro aesthetic sharp. */
+  image-rendering: pixelated;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * GLOBE ICON (IE / Website shortcut)
+ *
+ * Recreates the classic Internet Explorer desktop icon from Windows
+ * XP — a blue globe with latitude/longitude grid lines, the iconic
+ * italic "e", and an orbit ring circling the globe.
+ *
+ * Structure:
+ *   - Base element: Blue globe sphere with multi-stop gradient
+ *     (stepped, not smooth — gives a more "rendered" XP feel)
+ *   - ::before: Tilted orbit ring around the globe (the "swoosh"
+ *     that made the IE icon so recognizable)
+ *   - ::after: The italic "e" brand mark with heavy drop shadow
+ *
+ * The globe also uses a layered background of repeating-linear-gradient
+ * stripes to simulate latitude/longitude lines. These hard-edged
+ * 1px lines look more like pixel art than the old smooth crosshairs.
+ * ═══════════════════════════════════════════════════════════════════ */
+.desktop-icon__img--globe {
+  /* Stepped blue gradient — hard stops give a "banded" look that
+     feels more like a rendered 3D model than a smooth CSS gradient.
+     XP icons used this stepped shading technique extensively. */
+  background:
+    /* Latitude lines — horizontal stripes at fixed intervals */
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 8px,
+      rgba(255,255,255,0.25) 8px,
+      rgba(255,255,255,0.25) 9px
+    ),
+    /* Longitude lines — vertical stripes at fixed intervals */
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 10px,
+      rgba(255,255,255,0.2) 10px,
+      rgba(255,255,255,0.2) 11px
+    ),
+    /* Globe sphere — stepped gradient with hard color bands */
+    linear-gradient(
+      160deg,
+      #7ec8ff 0%,
+      #7ec8ff 8%,
+      #4a9ff5 8%,
+      #4a9ff5 20%,
+      #2b7de0 20%,
+      #2b7de0 40%,
+      #1560c7 40%,
+      #1560c7 60%,
+      #0d47a1 60%,
+      #0d47a1 80%,
+      #0a2e6b 80%
+    );
+  border-radius: 50%;
+  /* Inset shadow creates the 3D sphere illusion — highlight at
+     top-left, deep shadow at bottom-right */
+  box-shadow:
+    inset -3px -3px 6px rgba(0, 0, 0, 0.5),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.3),
+    1px 2px 3px rgba(0, 0, 0, 0.4);
+  border: 1px solid #0a2e6b;
+}
+
+/* Orbit ring — the tilted elliptical swoosh that circles the globe.
+ * In the real IE icon this was a gold/white ring. We create it with
+ * a rotated border-ellipse that extends slightly beyond the globe. */
+.desktop-icon__img--globe::before {
+  content: '';
+  position: absolute;
+  /* Position the ring so it orbits around the globe center */
+  top: -2px;
+  left: -5px;
+  width: 56px;
+  height: 38px;
+  border: 2px solid transparent;
+  /* Only the bottom arc of the ellipse is visible — this creates
+     the "swoosh passing in front of the globe" effect */
+  border-bottom-color: #ffe066;
+  border-right-color: #ffd633;
+  border-radius: 50%;
+  /* Tilt the ring ~30° to match XP's icon perspective */
+  transform: rotate(-30deg);
+  /* Render above the globe surface but below the "e" */
+  z-index: 1;
+}
+
+/* The italic "e" — IE's brand mark.
+ * XP's version was large, white, bold, with a strong drop shadow.
+ * We use Georgia italic for the classic serif "e" shape. */
+.desktop-icon__img--globe::after {
+  content: 'e';
+  position: absolute;
+  top: 48%;
+  left: 52%;
+  transform: translate(-50%, -50%);
+  font-family: "Georgia", "Times New Roman", serif;
+  font-style: italic;
+  font-weight: bold;
+  font-size: 30px;
+  color: #fff;
+  /* Heavy multi-layer drop shadow — XP icons had strong shadows
+     to make them readable against any background */
+  text-shadow:
+    1px 1px 0 #0a2e6b,
+    2px 2px 0 rgba(0, 0, 0, 0.5),
+    0 0 4px rgba(0, 50, 150, 0.6);
+  line-height: 1;
+  z-index: 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * FOLDER ICON (Project shortcuts)
+ *
+ * Recreates the classic Windows XP manila folder icon with proper
+ * 3D perspective. XP folders had:
+ *   - A back panel (darker) visible behind the front
+ *   - A front panel (lighter) with highlight/shadow edges
+ *   - A tab on the back panel's top-left corner
+ *   - Documents/papers peeking out the top
+ *
+ * Structure:
+ *   - Base element: Front panel (lighter yellow with 3D edges)
+ *   - ::before: Back panel + tab (darker yellow, sits behind)
+ *   - ::after: Document edge peeking out (white paper)
+ *
+ * The 3D effect comes from carefully crafted border-color values:
+ *   - Top/left borders are lighter (highlight from top-left light)
+ *   - Bottom/right borders are darker (shadow)
+ * This is the exact technique Windows XP used across all its UI.
+ * ═══════════════════════════════════════════════════════════════════ */
+.desktop-icon__img--folder {
+  /* Front panel — lighter yellow, stepped gradient for the XP look */
+  background: linear-gradient(
+    180deg,
+    #ffe680 0%,
+    #ffe680 30%,
+    #ffd740 30%,
+    #ffd740 60%,
+    #f5c518 60%,
+    #f5c518 85%,
+    #e6b000 85%
+  );
+  /* 3D raised edges — classic XP highlight/shadow border */
+  border: 1px solid;
+  border-color: #ffe88a #b08200 #9a7000 #ffe88a;
+  border-radius: 0;
+  position: relative;
+  /* Front panel sits lower and is slightly smaller than full icon,
+     leaving room for the back panel/tab behind it */
+  margin-top: 14px;
+  height: 34px;
+  width: 42px;
+  margin-left: 3px;
+  /* Raised feel via box-shadow */
+  box-shadow:
+    1px 2px 3px rgba(0, 0, 0, 0.3),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Back panel + tab — darker yellow, positioned behind and above
+ * the front panel. The tab is part of this element's shape,
+ * created by clipping the top-right corner. */
+.desktop-icon__img--folder::before {
+  content: '';
+  position: absolute;
+  /* Sits behind and above the front panel */
+  top: -12px;
+  left: -2px;
+  width: 42px;
+  height: 14px;
+  /* Back panel visible above front — darker shade */
+  background: linear-gradient(180deg, #eab000 0%, #d9a000 100%);
+  border: 1px solid;
+  border-color: #f5c518 #9a7000 transparent #9a7000;
+  border-bottom: none;
+  /* The tab shape — only the left side has rounded corners,
+     and the tab only extends partway across */
+  clip-path: polygon(0 0, 40% 0, 50% 40%, 100% 40%, 100% 100%, 0 100%);
+}
+
+/* Document peeking out — white paper edge visible between the
+ * front and back panels, suggesting the folder contains files */
+.desktop-icon__img--folder::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 8px;
+  width: 28px;
+  height: 8px;
+  /* White paper with a subtle shadow to separate it from the folder */
+  background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+  border: 1px solid #c0c0c0;
+  border-bottom: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * TERMINAL ICON (CW Info shortcut)
+ *
+ * XP shipped with plenty of little utility icons that combined a
+ * beveled frame, a dark screen, and bright status details. This one
+ * keeps that language so CW Info feels like another native desktop app
+ * instead of a random extra shortcut.
+ * ═══════════════════════════════════════════════════════════════════ */
+.desktop-icon__img--terminal {
+  width: 46px;
+  height: 38px;
+  margin-top: 5px;
+  margin-left: 1px;
+  border: 1px solid;
+  border-color: #f6fbff #335c8c #203857 #f6fbff;
+  background: linear-gradient(180deg, #bfe1ff 0%, #7db5e6 52%, #4d83bd 100%);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.75),
+    inset -1px -1px 0 rgba(32, 56, 87, 0.65),
+    1px 2px 3px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.desktop-icon__img--terminal::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 36px;
+  height: 24px;
+  border: 1px solid #0b1d34;
+  background:
+    linear-gradient(180deg, rgba(110, 170, 255, 0.18), transparent 30%),
+    #0a0f18;
+  box-shadow:
+    inset 1px 1px 0 rgba(155, 215, 255, 0.2),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.55);
+}
+
+.desktop-icon__img--terminal::after {
+  content: 'C:\\>';
+  position: absolute;
+  top: 10px;
+  left: 8px;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 8px;
+  font-weight: bold;
+  color: #fff7a6;
+  text-shadow: 0 0 2px rgba(255, 247, 166, 0.45);
+}
+
+/* ── Icon Label ──────────────────────────────────────────────────── */
+.desktop-icon__label {
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  text-align: center;
+  word-wrap: break-word;
+  max-width: 68px;
+  padding: 1px 2px;
+  line-height: 1.2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * CHANGE 1: CRISP WINDOW EDGES
+ *
+ * xp.css sets `border-radius: 8px` on `.window` and `.title-bar`,
+ * which causes the 6-layer inset box-shadow to anti-alias against
+ * the rounded corners. Zeroing out all border-radius ensures every
+ * shadow pixel lands on a straight edge — no subpixel blending.
+ *
+ * We also disable `-webkit-font-smoothing: antialiased` that xp.css
+ * sets on `.window`, so text and borders render with maximum crispness.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+.homepage-window {
+  position: absolute;
+  z-index: 10;
+  width: min(1200px, calc(100vw - var(--desktop-icon-gutter) - 40px));
+  max-height: calc(100vh - var(--xp-taskbar-height) - 16px);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+
+  /* ── Crisp edge overrides ── */
+  border-radius: 0 !important;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+
+  /* ── Border visibility fix ──
+   * The XP theme sets padding to `0 0 3px 0`, which lets the title-bar
+   * (a full-width block) paint directly on top of the 3px-deep inset
+   * box-shadow that forms the window border. With border-radius: 0, the
+   * blue gradient no longer blends nicely with the blue shadow — the
+   * top/left/right border becomes invisible.
+   *
+   * Restoring uniform 3px padding pushes all children inward, revealing
+   * the full 6-layer inset shadow frame on every side. */
+  padding: 3px !important;
+}
+
+.homepage-window > header {
+  flex: 0 0 auto;
+}
+
+.homepage-window > .window-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.homepage-window.is-maximized {
+  position: fixed;
+  left: 8px !important;
+  top: 8px !important;
+  right: 8px;
+  bottom: calc(var(--xp-taskbar-height) + 8px);
+  width: auto !important;
+  max-width: none !important;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.homepage-window.is-maximized > header {
+  flex: 0 0 auto;
+}
+
+.homepage-window.is-maximized > .window-body {
+  flex: 1 1 auto;
+}
+
+.homepage-window.is-maximized .ie6-status-bar {
+  flex: 0 0 auto;
+}
+
+.homepage-window.is-maximized .cw-window-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.homepage-window > header > .title-bar {
+  user-select: none;
+}
+
+/* Zero out title-bar rounding on the outer window */
+.homepage-window > header > .title-bar {
+  border-radius: 0 !important;
+}
+
+/* Zero out rounding on ALL nested windows inside the homepage
+   (this covers the terminal window and any future nested windows).
+   Same border-visibility fix as the outer window: the XP theme's
+   padding (0 0 3px) hides the top/left/right inset shadow behind
+   the title bar. Restoring 3px on all sides reveals the full frame. */
+.homepage-window .terminal-window {
+  border-radius: 0 !important;
+  padding: 3px !important;
+}
+
+.homepage-window .terminal-window > .title-bar {
+  border-radius: 0 !important;
+}
+
+.cw-window {
+  width: min(680px, calc(100vw - var(--desktop-icon-gutter) - 56px));
+}
+
+.cw-window-body {
+  background:
+    radial-gradient(circle at top right, rgba(95, 149, 255, 0.12), transparent 26%),
+    linear-gradient(180deg, #0d1320 0%, #06090f 100%) !important;
+  border-top: 1px solid #3d79d0;
+  min-height: 320px;
+  padding: 16px !important;
+  margin: 0 !important;
+}
+
+.homepage-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * IE6 CONTENT VIEWPORT
+ *
+ * Mimics the white content area of Internet Explorer 6 — the sunken
+ * rectangle where web pages actually rendered, sitting inside the
+ * grey browser chrome. The double-ridge inset border is the classic
+ * Windows "field" / "well" look:
+ *
+ *   Outer border:  dark top/left (#808080), light bottom/right (#dfdfdf)
+ *   Inner shadow:  very dark inset top/left (#0a0a0a), white inset
+ *                  bottom/right (#ffffff)
+ *
+ * Together these two layers create the "pressed into the surface"
+ * illusion that XP used for text fields, list views, and — most
+ * relevantly — the IE6 page viewport.
+ * ═══════════════════════════════════════════════════════════════════ */
+.ie6-content-viewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  background: #ffffff;
+  margin: 0;
+  border: 2px solid;
+  border-color: #808080 #dfdfdf #dfdfdf #808080;
+  box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #fff;
+}
+
+/* ── Shared Section Styles ───────────────────────────────────────── */
+.homepage-body section {
+  padding: 24px 32px;
+}
+
+.section-heading {
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  color: #003399;
+  margin: 0 0 16px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * CHANGE 2: NESTED TERMINAL WINDOW
+ *
+ * The hero section now contains a full xp.css `div.window` nested
+ * inside the main window body. The outer `.hero-section` is just a
+ * neutral container; the `.terminal-window` provides the XP chrome,
+ * and `.terminal-body` is the black command-prompt interior.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Hero Section (outer container) ──────────────────────────────── */
+.hero-section {
+  background: #ece9d8;
+  padding: 24px 32px !important;
+}
+
+/* ── Terminal Window ─────────────────────────────────────────────── */
+.terminal-window {
+  /* Let xp.css handle the window chrome — we just size it */
+  width: 100%;
+}
+
+/* ── Terminal Body ───────────────────────────────────────────────── */
+.terminal-body {
+  background: #0c0c0c !important;
+  color: #c0c0c0;
+  font-family: "Courier New", "Lucida Console", monospace;
+  padding: 16px !important;
+  margin: 0 !important;
+  min-height: 280px;
+}
+
+/* ── Terminal Prompt ─────────────────────────────────────────────── */
+.terminal-prompt {
+  font-family: "Courier New", "Lucida Console", monospace;
+  font-size: 13px;
+  color: #a0a0a0;
+  margin: 0 0 16px 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+/* ── Hero Content (inside terminal) ──────────────────────────────── */
+.hero-content {
+  text-align: center;
+}
+
+.hero-typewriter {
+  font-family: "Courier New", "Lucida Console", monospace;
+  font-size: clamp(0.7rem, 2.5vw, 1.4rem);
+  font-weight: bold;
+  color: #c0c0c0;
+}
+
+.hero-line {
+  line-height: 1.4;
+}
+
+.hero-tagline {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #aaa;
+  font-style: italic;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  /* Fade-in animation */
+  opacity: 0;
+  animation: fadeIn 1s ease-in 2s forwards;
+}
+
+.cw-window-title-bar {
+  user-select: none;
+  cursor: move;
+  touch-action: none;
+}
+
+.cw-content {
+  text-align: left;
+}
+
+.cw-terminal-prompt {
+  color: #bac6d8;
+  margin-bottom: 18px;
+  letter-spacing: 0.01em;
+}
+
+.cw-neofetch {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.cw-ascii-art {
+  margin: 0;
+  color: #8dc9ff;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: clamp(0.76rem, 1.7vw, 0.96rem);
+  line-height: 1.22;
+  text-shadow: 0 0 8px rgba(71, 151, 255, 0.18);
+}
+
+.cw-neofetch-details {
+  min-width: 0;
+  color: #d6e7fb;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 0.83rem;
+  line-height: 1.08;
+}
+
+.cw-neofetch-title {
+  margin: 0;
+  color: #ffffff;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+}
+
+.cw-neofetch-rule {
+  height: 1px;
+  margin: 6px 0 10px;
+  background: linear-gradient(90deg, #8fc8ff 0%, rgba(143, 200, 255, 0.15) 100%);
+}
+
+.cw-neofetch-row {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 86px 10px minmax(0, 1fr);
+  gap: 0;
+}
+
+.cw-neofetch-label {
+  color: #7dd6ff;
+  font-weight: bold;
+}
+
+.cw-neofetch-separator {
+  color: #7dd6ff;
+}
+
+.cw-neofetch-value {
+  color: #d6e7fb;
+}
+
+.cw-color-swatches {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.cw-color-swatches--bright {
+  margin-top: 2px;
+}
+
+.cw-swatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.cw-swatch--blue {
+  background: #316ac5;
+}
+
+.cw-swatch--green {
+  background: #5aa05a;
+}
+
+.cw-swatch--gold {
+  background: #d3a437;
+}
+
+.cw-swatch--silver {
+  background: #9ea6b0;
+}
+
+.cw-swatch--navy {
+  background: #1f3f75;
+}
+
+.cw-swatch--teal {
+  background: #317f93;
+}
+
+.cw-swatch--amber {
+  background: #d78500;
+}
+
+.cw-swatch--ice {
+  background: #cfe6ff;
+}
+
+@media (max-width: 768px) {
+  .cw-neofetch {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .cw-ascii-art {
+    font-size: 0.8rem;
+  }
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── About Section ───────────────────────────────────────────────── */
+.about-section {
+  background: #ece9d8;
+}
+
+.about-section fieldset {
+  background: #fff;
+}
+
+.about-section legend {
+  font-size: 13px;
+  font-weight: bold;
+  color: #003399;
+}
+
+.lead {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #000;
+  margin: 8px 0 0 0;
+}
+
+/* ── Features Section ────────────────────────────────────────────── */
+.features-section {
+  background: #fff;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.feature-card {
+  background: #ece9d8;
+}
+
+.feature-card legend {
+  font-weight: bold;
+  color: #003399;
+  font-size: 12px;
+}
+
+.feature-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.feature-card p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #000;
+  margin: 0;
+}
+
+/* ── Events Section ──────────────────────────────────────────────── */
+.events-section {
+  background: #ece9d8;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 800px;
+}
+
+.event-card {
+  background: #fff;
+}
+
+.event-card legend {
+  font-weight: bold;
+  font-size: 12px;
+  color: #316ac5;
+  /* Legend styled like a date badge */
+  background: #ece9d8;
+  padding: 2px 8px;
+}
+
+.event-details h3 {
+  font-size: 13px;
+  margin: 0 0 4px 0;
+  color: #003399;
+}
+
+.event-details p {
+  font-size: 11px;
+  color: #000;
+  line-height: 1.6;
+  margin: 0 0 4px 0;
+}
+
+.event-time {
+  font-size: 11px;
+  color: #316ac5;
+  font-weight: bold;
+}
+
+/* ── CTA Section ─────────────────────────────────────────────────── */
+.cta-section {
+  background: #fff;
+  text-align: center;
+}
+
+.cta-section fieldset {
+  background: #ece9d8;
+}
+
+.cta-section legend {
+  font-weight: bold;
+  font-size: 13px;
+  color: #003399;
+}
+
+.cta-section p {
+  font-size: 12px;
+  color: #000;
+  margin: 8px 0 16px 0;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-button {
+  padding: 4px 24px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .homepage-window {
+    position: static;
+    z-index: auto;
+    width: auto;
+    margin: 0;
+    /* Full-width on mobile — no outer margin */
+  }
+
+  .homepage-body section {
+    padding: 16px;
+  }
+
+  .hero-section {
+    padding: 16px !important;
+  }
+
+  .hero-typewriter {
+    font-size: clamp(0.5rem, 3vw, 0.9rem);
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    font-size: 13px;
+  }
+
+  /* On mobile, stack icons horizontally along the top
+     so they don't overlap the full-width browser window */
+  .desktop-icons {
+    position: static;
+    grid-template-rows: none;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fill, 72px);
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .xp-desktop {
+    padding-bottom: calc(var(--xp-taskbar-height) + 6px);
+  }
+}
+
+body.xp-window-dragging {
+  user-select: none;
+  cursor: move;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * IE6 STATUS BAR
+ *
+ * The IE6 status bar had a specific layout:
+ *   - Left: "Done" (or page load status text)
+ *   - Center: General info (we use this for copyright)
+ *   - Right: "Internet" zone indicator (with a globe icon in real IE6)
+ *
+ * xp.css's `.status-bar` provides the sunken panel look, but we need
+ * custom sizing to match IE6's proportions — the "Done" field takes
+ * the most space, while the zone indicator is a fixed-width field
+ * on the far right.
+ * ═══════════════════════════════════════════════════════════════════ */
+.ie6-status-bar {
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 11px;
+}
+
+/* "Done" — the primary status field, takes remaining space.
+ * In real IE6 this showed "Done" when the page finished loading,
+ * or the URL of a hovered link. */
+.status-bar__done {
+  flex: 2;
+}
+
+/* Copyright / info field — center column */
+.status-bar__info {
+  flex: 1;
+  text-align: center;
+}
+
+/* "Internet" zone indicator — fixed width on the right.
+ * In real IE6 this showed a globe icon and "Internet" (or
+ * "Local intranet", "Trusted sites", etc.). */
+.status-bar__zone {
+  flex: 0 0 auto;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * XP TASKBAR
+ * ═══════════════════════════════════════════════════════════════════ */
+.xp-taskbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--xp-taskbar-height);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #3f97ff 0%, #2671d7 42%, #1f5fb7 100%);
+  border-top: 1px solid #7cc4ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 -1px 0 rgba(0, 24, 84, 0.5);
+  z-index: 100;
+}
+
+.xp-taskbar__start {
+  height: 32px;
+  min-width: 86px;
+  padding: 0 14px 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid;
+  border-color: #baf6a9 #1f6d10 #1f6d10 #baf6a9;
+  border-radius: 16px 10px 10px 16px;
+  background: linear-gradient(180deg, #66cd4e 0%, #38a825 52%, #2d8f1d 100%);
+  color: #fff;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 16px;
+  font-style: italic;
+  font-weight: bold;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.xp-taskbar__start:active {
+  border-color: #1f6d10 #baf6a9 #baf6a9 #1f6d10;
+}
+
+.xp-taskbar__start-flag {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f6fff3 0%, #6ad856 55%, #2e8a1f 100%);
+  box-shadow: 0 0 0 1px rgba(0, 67, 18, 0.65);
+}
+
+.xp-taskbar__start-text {
+  text-transform: lowercase;
+  letter-spacing: 0.01em;
+}
+
+.xp-start-menu-container {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.xp-start-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  width: 300px;
+  border: 1px solid;
+  border-color: #f6fbff #183f82 #183f82 #f6fbff;
+  background: linear-gradient(180deg, #f2f6fc 0%, #d4e4fb 100%);
+  box-shadow:
+    2px 2px 0 rgba(18, 56, 114, 0.58),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+  z-index: 140;
+  overflow: hidden;
+}
+
+.xp-start-menu__header {
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #2f79d9 0%, #1f5fb7 100%);
+  color: #fff;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.xp-start-menu__items {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xp-start-menu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #0d2654;
+  text-align: left;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.xp-start-menu__item:hover,
+.xp-start-menu__item:focus {
+  border-color: #5f9de6 #2f6fc8 #2f6fc8 #5f9de6;
+  background: linear-gradient(180deg, #5ea8ff 0%, #3b87e8 100%);
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  outline: none;
+}
+
+.xp-start-menu__item-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  border: 1px solid;
+  border-color: #f8fcff #2a5ea9 #2a5ea9 #f8fcff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.48);
+  flex: 0 0 auto;
+}
+
+.xp-start-menu__item-icon--club {
+  background:
+    radial-gradient(circle at 65% 30%, rgba(255, 255, 255, 0.75) 0, rgba(255, 255, 255, 0) 52%),
+    linear-gradient(180deg, #8ad3ff 0%, #4f98eb 100%);
+}
+
+.xp-start-menu__item-icon--terminal {
+  background:
+    linear-gradient(180deg, rgba(120, 178, 255, 0.28), transparent 38%),
+    #0a1322;
+}
+
+.xp-start-menu__item-label {
+  line-height: 1.15;
+}
+
+.xp-taskbar__windows {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.xp-taskbar__window-button {
+  height: 30px;
+  min-width: 144px;
+  max-width: 260px;
+  padding: 0 12px;
+  border: 1px solid;
+  border-color: #8fc5ff #1d4f9d #1d4f9d #8fc5ff;
+  background: linear-gradient(180deg, #5ea8ff 0%, #3b87e8 58%, #2e6fc8 100%);
+  color: #fff;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: left;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xp-taskbar__window-button:hover {
+  filter: brightness(1.08);
+}
+
+.xp-taskbar__window-button.is-active {
+  border-color: #1d4f9d #8fc5ff #8fc5ff #1d4f9d;
+  background: linear-gradient(180deg, #2f6fc8 0%, #2a66bb 100%);
+  box-shadow: inset 0 1px 0 rgba(9, 30, 73, 0.5);
+}
+
+.xp-taskbar__window-button.is-minimized {
+  opacity: 0.88;
+}
+
+.xp-taskbar__clock {
+  min-width: 162px;
+  height: 30px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  border: 1px solid;
+  border-color: #8fc5ff #1d4f9d #1d4f9d #8fc5ff;
+  background: linear-gradient(180deg, #2f79d9 0%, #255fae 100%);
+  color: #fff;
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.xp-taskbar__network {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1px;
+  width: 16px;
+  height: 12px;
+}
+
+.xp-taskbar__network-bar {
+  width: 3px;
+  border-radius: 1px 1px 0 0;
+  background: linear-gradient(180deg, #ffffff 0%, #bfe4ff 100%);
+  box-shadow: 0 0 0 1px rgba(11, 44, 96, 0.45);
+}
+
+.xp-taskbar__network-bar--1 {
+  height: 4px;
+}
+
+.xp-taskbar__network-bar--2 {
+  height: 6px;
+}
+
+.xp-taskbar__network-bar--3 {
+  height: 8px;
+}
+
+.xp-taskbar__network-bar--4 {
+  height: 10px;
+}
+
+.xp-taskbar__tray-icon {
+  width: 14px;
+  height: 14px;
+  position: relative;
+  display: inline-block;
+}
+
+.xp-taskbar__tray-icon--volume::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 4px;
+  width: 5px;
+  height: 6px;
+  background: #f2f8ff;
+  border: 1px solid rgba(14, 42, 88, 0.7);
+  border-right: none;
+}
+
+.xp-taskbar__tray-icon--volume::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 3px;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 6px solid #f2f8ff;
+  filter: drop-shadow(0 0 0 rgba(14, 42, 88, 0.7));
+}
+
+.xp-taskbar__tray-icon--shield {
+  border-radius: 2px 2px 5px 5px;
+  background: linear-gradient(180deg, #ffd766 0%, #ffc232 100%);
+  box-shadow: inset 0 0 0 1px rgba(127, 72, 0, 0.65);
+}
+
+.xp-taskbar__tray-icon--shield::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 4px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.xp-taskbar__tray-icon--messenger {
+  border-radius: 3px;
+  background: linear-gradient(180deg, #a8ddff 0%, #5ea8ff 100%);
+  box-shadow: inset 0 0 0 1px rgba(25, 69, 133, 0.75);
+}
+
+.xp-taskbar__tray-icon--messenger::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  bottom: -2px;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 0 solid transparent;
+  border-top: 4px solid #6ab0ff;
+}
+
+.xp-taskbar__time {
+  font-family: "Tahoma", "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  min-width: 62px;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .xp-taskbar {
+    gap: 4px;
+    padding: 4px 6px;
+  }
+
+  .xp-taskbar__start {
+    min-width: 72px;
+    padding: 0 10px 0 8px;
+    font-size: 14px;
+  }
+
+  .xp-start-menu {
+    width: min(300px, calc(100vw - 16px));
+  }
+
+  .xp-taskbar__window-button {
+    min-width: 112px;
+    max-width: 180px;
+    font-size: 11px;
+  }
+
+  .xp-taskbar__clock {
+    min-width: 132px;
+    gap: 5px;
+    font-size: 10px;
+  }
+
+  .xp-taskbar__time {
+    font-size: 10px;
+  }
+}
