@@ -1,3 +1,4 @@
 # Ownership requests are advisory for now. The production environment is the
 # hard deployment gate so the sole repository owner is not locked out of PRs.
 /.github/ @Israel-Jauregui
+/infrastructure/ @Israel-Jauregui

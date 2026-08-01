@@ -22,7 +22,7 @@ The application uses local mock club data until the backend migration is ready.
 
 Merges to the protected `main` branch run CI and request an owner-approved deployment to AWS. The production job builds the site, assumes a short-lived AWS role through GitHub OIDC, uploads `dist/` to a private S3 bucket, and invalidates CloudFront.
 
-The repository stores no AWS access keys. Configure these variables in the GitHub `production` environment after applying the infrastructure repository:
+The repository stores no AWS access keys. Terraform lives in [`infrastructure/`](infrastructure/README.md). Configure these variables in the GitHub `frontend-production` environment after applying it:
 
 - `AWS_REGION`
 - `AWS_ROLE_ARN`
