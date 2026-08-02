@@ -82,10 +82,19 @@ resource "aws_acm_certificate" "site" {
 
 resource "cloudflare_dns_record" "certificate_validation" {
   for_each = {
-    for option in aws_acm_certificate.site.domain_validation_options : option.domain_name => {
-      name  = trimsuffix(option.resource_record_name, ".")
-      type  = option.resource_record_type
-      value = trimsuffix(option.resource_record_value, ".")
+    for domain_name in [var.domain_name, local.www_domain] : domain_name => {
+      name = trimsuffix(one([
+        for option in aws_acm_certificate.site.domain_validation_options : option.resource_record_name
+        if option.domain_name == domain_name
+      ]), ".")
+      type = one([
+        for option in aws_acm_certificate.site.domain_validation_options : option.resource_record_type
+        if option.domain_name == domain_name
+      ])
+      value = trimsuffix(one([
+        for option in aws_acm_certificate.site.domain_validation_options : option.resource_record_value
+        if option.domain_name == domain_name
+      ]), ".")
     }
   }
 
