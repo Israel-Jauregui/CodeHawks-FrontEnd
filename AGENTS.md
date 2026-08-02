@@ -22,6 +22,15 @@ npm run preview    # preview production build
 - **ESLint only targets `*.{js,jsx}`** (`eslint.config.js`). `.tsx` files are not linted.
 - **Mixed extensions:** entrypoints (`main.jsx`, `App.jsx`) are JSX; components and pages are `.tsx`. Follow the existing pattern per directory when adding files.
 
+## AWS Infrastructure Guardrail
+
+- AWS infrastructure is declared under `infrastructure/` and all ongoing AWS mutations must run through owner-approved GitHub Actions.
+- Do not run mutating AWS CLI commands, `terraform apply`, `terraform destroy`, CloudFormation deploys, or equivalent operations from a developer machine or agent session.
+- Local read-only validation such as `terraform fmt -check`, `terraform validate`, and speculative plans without credentials is allowed.
+- The only manual cloud bootstrap is the initial `codehawks-bootstrap` CloudFormation stack created by the human owner in the AWS console from `infrastructure/bootstrap/template.yaml`. This establishes GitHub OIDC without long-lived credentials.
+- After initial bootstrap, changes to that stack use the manual `Update AWS bootstrap` workflow. Frontend and Terraform deployments remain separate, owner-reviewed GitHub environments.
+- Never add AWS access keys to GitHub. Workflows must use short-lived OIDC sessions.
+
 ## Architecture
 ```text
 index.html          → Vite entrypoint, loads /src/main.jsx

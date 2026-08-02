@@ -1,0 +1,228 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  One-time CodeHawks bootstrap. Creates the Terraform state bucket and the
+  GitHub OIDC role used by owner-approved infrastructure workflows.
+
+Parameters:
+  GitHubOwner:
+    Type: String
+    Default: Israel-Jauregui
+  GitHubRepository:
+    Type: String
+    Default: CodeHawks-FrontEnd
+  GitHubEnvironment:
+    Type: String
+    Default: infrastructure-production
+
+Resources:
+  TerraformStateBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub codehawks-terraform-state-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldStateVersions
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 90
+            Status: Enabled
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Application
+          Value: CodeHawks
+        - Key: ManagedBy
+          Value: CloudFormation
+        - Key: Purpose
+          Value: TerraformState
+
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      Tags:
+        - Key: Application
+          Value: CodeHawks
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  InfrastructureBoundary:
+    Type: AWS::IAM::ManagedPolicy
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      ManagedPolicyName: codehawks-infrastructure-boundary
+      Description: Maximum permissions available to CodeHawks infrastructure roles
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ManageCodeHawksStorage
+            Effect: Allow
+            Action: s3:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:s3:::codehawks-*
+              - !Sub arn:${AWS::Partition}:s3:::codehawks-*/*
+          - Sid: ManageFrontendEdgeAndCostResources
+            Effect: Allow
+            Action:
+              - acm:*
+              - budgets:*
+              - cloudfront:*
+              - wafv2:*
+            Resource: "*"
+          - Sid: ManageCodeHawksRolesAndBoundary
+            Effect: Allow
+            Action:
+              - iam:CreatePolicyVersion
+              - iam:CreateRole
+              - iam:DeletePolicyVersion
+              - iam:DeleteRole
+              - iam:DeleteRolePolicy
+              - iam:GetOpenIDConnectProvider
+              - iam:GetPolicy
+              - iam:GetPolicyVersion
+              - iam:GetRole
+              - iam:GetRolePolicy
+              - iam:ListPolicyVersions
+              - iam:ListRolePolicies
+              - iam:PassRole
+              - iam:PutRolePolicy
+              - iam:SetDefaultPolicyVersion
+              - iam:TagRole
+              - iam:UntagRole
+              - iam:UpdateAssumeRolePolicy
+              - iam:UpdateRoleDescription
+            Resource:
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/codehawks-*
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/codehawks-*
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+          - Sid: UpdateBootstrapStack
+            Effect: Allow
+            Action:
+              - cloudformation:CreateChangeSet
+              - cloudformation:DeleteChangeSet
+              - cloudformation:DescribeChangeSet
+              - cloudformation:DescribeStackEvents
+              - cloudformation:DescribeStacks
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:GetTemplate
+              - cloudformation:UpdateStack
+              - cloudformation:ValidateTemplate
+            Resource:
+              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/codehawks-bootstrap/*
+              - !Sub arn:${AWS::Partition}:cloudformation:*:aws:transform/*
+
+  InfrastructureRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: codehawks-infrastructure-apply
+      Description: GitHub Actions OIDC role for owner-approved CodeHawks infrastructure changes
+      MaxSessionDuration: 3600
+      PermissionsBoundary: !Ref InfrastructureBoundary
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRoleWithWebIdentity
+            Principal:
+              Federated: !Ref GitHubOidcProvider
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOwner}/${GitHubRepository}:environment:${GitHubEnvironment}
+      Policies:
+        - PolicyName: ManageCodeHawksInfrastructure
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ManageCodeHawksStorage
+                Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::codehawks-*
+                  - !Sub arn:${AWS::Partition}:s3:::codehawks-*/*
+              - Sid: ManageFrontendEdgeAndCostResources
+                Effect: Allow
+                Action:
+                  - acm:*
+                  - budgets:*
+                  - cloudfront:*
+                  - wafv2:*
+                Resource: "*"
+              - Sid: CreateBoundedCodeHawksRoles
+                Effect: Allow
+                Action: iam:CreateRole
+                Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/codehawks-*
+                Condition:
+                  StringEquals:
+                    iam:PermissionsBoundary: !Ref InfrastructureBoundary
+              - Sid: ManageExistingCodeHawksRoles
+                Effect: Allow
+                Action:
+                  - iam:DeleteRole
+                  - iam:DeleteRolePolicy
+                  - iam:GetRole
+                  - iam:GetRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:PassRole
+                  - iam:PutRolePolicy
+                  - iam:TagRole
+                  - iam:UntagRole
+                  - iam:UpdateAssumeRolePolicy
+                  - iam:UpdateRoleDescription
+                Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/codehawks-*
+              - Sid: ReadGitHubIdentityProvider
+                Effect: Allow
+                Action: iam:GetOpenIDConnectProvider
+                Resource: !Ref GitHubOidcProvider
+              - Sid: UpdateBootstrapBoundary
+                Effect: Allow
+                Action:
+                  - iam:CreatePolicyVersion
+                  - iam:DeletePolicyVersion
+                  - iam:GetPolicy
+                  - iam:GetPolicyVersion
+                  - iam:ListPolicyVersions
+                  - iam:SetDefaultPolicyVersion
+                Resource: !Ref InfrastructureBoundary
+              - Sid: UpdateBootstrapStack
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:DeleteChangeSet
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStacks
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:GetTemplate
+                  - cloudformation:UpdateStack
+                  - cloudformation:ValidateTemplate
+                Resource:
+                  - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/codehawks-bootstrap/*
+                  - !Sub arn:${AWS::Partition}:cloudformation:*:aws:transform/*
+
+Outputs:
+  TerraformStateBucketName:
+    Description: Set this as TF_STATE_BUCKET in infrastructure-production.
+    Value: !Ref TerraformStateBucket
+  InfrastructureRoleArn:
+    Description: Set this as AWS_ROLE_ARN in infrastructure-production.
+    Value: !GetAtt InfrastructureRole.Arn
+  PermissionsBoundaryArn:
+    Description: Boundary applied to Terraform-created IAM roles.
+    Value: !Ref InfrastructureBoundary

@@ -1,0 +1,43 @@
+name: Update AWS bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-bootstrap
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update bootstrap stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: infrastructure-production
+
+    steps:
+      - name: Checkout approved revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Validate configuration
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        run: test -n "$AWS_ROLE_ARN"
+
+      - name: Get short-lived AWS credentials
+        uses: aws-actions/configure-aws-credentials@cabfdba3510de1431bac9dba27511d97497fc100 # v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: codehawks-bootstrap-${{ github.run_id }}
+
+      - name: Update versioned bootstrap stack
+        run: >-
+          aws cloudformation deploy
+          --template-file infrastructure/bootstrap/template.yaml
+          --stack-name codehawks-bootstrap
+          --capabilities CAPABILITY_NAMED_IAM
+          --no-fail-on-empty-changeset
