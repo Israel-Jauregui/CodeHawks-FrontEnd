@@ -41,3 +41,64 @@ jobs:
           --stack-name codehawks-bootstrap
           --capabilities CAPABILITY_NAMED_IAM
           --no-fail-on-empty-changeset
+
+      - name: Verify deployed OIDC provider permissions
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          readonly expected_account="394270749442"
+          readonly role_name="codehawks-infrastructure-apply"
+          readonly policy_name="ManageCodeHawksInfrastructure"
+
+          actual_account="$(aws sts get-caller-identity --query Account --output text)"
+          caller_arn="$(aws sts get-caller-identity --query Arn --output text)"
+
+          [[ "$actual_account" == "$expected_account" ]]
+          [[ "$caller_arn" == "arn:aws:sts::${expected_account}:assumed-role/${role_name}/"* ]]
+
+          allows_oidc_list() {
+            jq -e '
+              def as_array: if type == "array" then . else [.] end;
+              any(
+                .Statement[];
+                .Effect == "Allow"
+                and ((.Action | as_array | index("iam:ListOpenIDConnectProviders")) != null)
+                and ((.Resource | as_array | index("*")) != null)
+              )
+            ' >/dev/null
+          }
+
+          inline_policy="$(
+            aws iam get-role-policy \
+              --role-name "$role_name" \
+              --policy-name "$policy_name" \
+              --query PolicyDocument \
+              --output json
+          )"
+          allows_oidc_list <<<"$inline_policy"
+
+          boundary_arn="$(
+            aws iam get-role \
+              --role-name "$role_name" \
+              --query 'Role.PermissionsBoundary.PermissionsBoundaryArn' \
+              --output text
+          )"
+          boundary_version="$(
+            aws iam get-policy \
+              --policy-arn "$boundary_arn" \
+              --query 'Policy.DefaultVersionId' \
+              --output text
+          )"
+          boundary_policy="$(
+            aws iam get-policy-version \
+              --policy-arn "$boundary_arn" \
+              --version-id "$boundary_version" \
+              --query 'PolicyVersion.Document' \
+              --output json
+          )"
+          allows_oidc_list <<<"$boundary_policy"
+
+          # This call proves the effective intersection of the role policy and
+          # its permissions boundary permits the Terraform provider data source.
+          aws iam list-open-id-connect-providers >/dev/null
