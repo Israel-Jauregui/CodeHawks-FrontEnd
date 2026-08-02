@@ -67,11 +67,16 @@ Merge infrastructure changes into `main`, start **Apply infrastructure** from th
 
 If Cloudflare already has apex or `www` records for the old VPS, import those records into `cloudflare_dns_record.apex` and `cloudflare_dns_record.www` before the first apply. This allows Terraform to update them only after CloudFront is ready instead of failing because the records already exist.
 
-Run the following locally with the remote backend initialized, or run it from an authenticated checkout after the workflow apply:
+The approved apply workflow prints the non-secret deployment outputs. Copy `frontend_deploy_role_arn`, `site_bucket_name`, and `cloudfront_distribution_id`, then either enter them in the `frontend-production` environment through GitHub settings or run this GitHub-only helper:
 
 ```sh
+AWS_ROLE_ARN="copied-role-arn" \
+S3_BUCKET="copied-bucket-name" \
+CLOUDFRONT_DISTRIBUTION_ID="copied-distribution-id" \
 ./scripts/configure-frontend-deployment.sh
 ```
+
+The helper only updates GitHub environment variables. It does not read Terraform state or contact AWS.
 
 The frontend's next merge to `main` will build, request Israel's `frontend-production` approval, upload the static files, and invalidate CloudFront.
 
