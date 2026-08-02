@@ -167,6 +167,21 @@ jobs:
           aws-region: us-east-1
           role-session-name: codehawks-dns-import-${{ github.run_id }}
 
+      - name: Verify AWS identity and OIDC provider read access
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          readonly expected_account="394270749442"
+          readonly expected_role="codehawks-infrastructure-apply"
+
+          actual_account="$(aws sts get-caller-identity --query Account --output text)"
+          caller_arn="$(aws sts get-caller-identity --query Arn --output text)"
+
+          [[ "$actual_account" == "$expected_account" ]]
+          [[ "$caller_arn" == "arn:aws:sts::${expected_account}:assumed-role/${expected_role}/"* ]]
+          aws iam list-open-id-connect-providers >/dev/null
+
       - name: Initialize remote state
         run: terraform init -backend-config="bucket=$TF_STATE_BUCKET"
 
