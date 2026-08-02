@@ -2,3 +2,8 @@ cloudflare_zone_id   = "replace-with-cloudflare-zone-id"
 budget_alert_email   = "officer@example.com"
 monthly_budget_usd   = 25
 enable_flat_rate_waf = false
+
+# Immutable GitHub identifiers used in OIDC trust policies. Update only if the
+# deployment repository moves to a different owner or repository.
+github_owner_id          = "29392107"
+frontend_repository_id  = "1319366708"
