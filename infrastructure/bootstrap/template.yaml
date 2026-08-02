@@ -121,6 +121,10 @@ Resources:
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/codehawks-*
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/codehawks-*
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+          - Sid: ListGitHubIdentityProviders
+            Effect: Allow
+            Action: iam:ListOpenIDConnectProviders
+            Resource: "*"
           - Sid: UpdateBootstrapStack
             Effect: Allow
             Action:
@@ -198,8 +202,13 @@ Resources:
                 Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/codehawks-*
               - Sid: ReadGitHubIdentityProvider
                 Effect: Allow
-                Action: iam:GetOpenIDConnectProvider
+                Action:
+                  - iam:GetOpenIDConnectProvider
                 Resource: !Ref GitHubOidcProvider
+              - Sid: ListGitHubIdentityProviders
+                Effect: Allow
+                Action: iam:ListOpenIDConnectProviders
+                Resource: "*"
               - Sid: UpdateBootstrapBoundary
                 Effect: Allow
                 Action:
