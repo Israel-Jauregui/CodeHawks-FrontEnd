@@ -78,7 +78,7 @@ CLOUDFRONT_DISTRIBUTION_ID="copied-distribution-id" \
 
 The helper only updates GitHub environment variables. It does not read Terraform state or contact AWS.
 
-The frontend's next merge to `main` will build, request Israel's `frontend-production` approval, upload the static files, and invalidate CloudFront.
+Enable **Deploy frontend** only after these variables exist. Then start it manually from GitHub Actions and approve the separate `frontend-production` gate; it builds protected `main`, uploads the static files, and invalidates CloudFront.
 
 ## 4. Move from the AWS Free account plan to durable production
 
