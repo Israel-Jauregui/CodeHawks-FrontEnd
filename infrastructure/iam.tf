@@ -17,7 +17,7 @@ data "aws_iam_policy_document" "frontend_assume_role" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_owner}/${var.frontend_repository}:environment:${var.frontend_environment}"]
+      values   = ["repo:${var.github_owner}@${var.github_owner_id}/${var.frontend_repository}@${var.frontend_repository_id}:environment:${var.frontend_environment}"]
     }
   }
 }

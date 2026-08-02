@@ -1,0 +1,211 @@
+name: Import existing Cloudflare DNS
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Discover existing records first, then import their IDs
+        required: true
+        default: discover
+        type: choice
+        options:
+          - discover
+          - import
+      apex_record_id:
+        description: Existing codehawks.org record ID; leave blank if absent
+        required: false
+        type: string
+      www_record_id:
+        description: Existing www.codehawks.org record ID; leave blank if absent
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-infrastructure
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    name: Discover existing web records
+    if: ${{ inputs.operation == 'discover' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: infrastructure-production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+
+    steps:
+      - name: Validate discovery configuration
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ZONE_ID"
+
+      - name: List existing apex and www web records
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for record_name in codehawks.org www.codehawks.org; do
+            response="$(
+              curl --fail-with-body --silent --show-error --get \
+                "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records" \
+                --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+                --data-urlencode "name=${record_name}" \
+                --data-urlencode "per_page=100"
+            )"
+
+            jq -e '.success == true' <<<"$response" >/dev/null
+            echo "Web records for ${record_name}:"
+            records="$(
+              jq -r --arg name "$record_name" \
+                '.result[] | select(.name == $name and (.type == "A" or .type == "AAAA" or .type == "CNAME")) | "id=\(.id) type=\(.type) content=\(.content)"' \
+                <<<"$response"
+            )"
+
+            if [[ -n "$records" ]]; then
+              echo "$records"
+            else
+              echo "none"
+            fi
+          done
+
+  import:
+    name: Import selected records into Terraform state
+    if: ${{ inputs.operation == 'import' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: infrastructure-production
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: infrastructure
+    env:
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_budget_alert_email: ${{ secrets.TF_VAR_BUDGET_ALERT_EMAIL }}
+      TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
+      TF_VAR_enable_flat_rate_waf: ${{ vars.ENABLE_FLAT_RATE_WAF }}
+      APEX_RECORD_ID: ${{ inputs.apex_record_id }}
+      WWW_RECORD_ID: ${{ inputs.www_record_id }}
+
+    steps:
+      - name: Checkout approved revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
+        with:
+          terraform_version: "1.12.2"
+
+      - name: Validate configuration and selected records
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$AWS_ROLE_ARN"
+          test -n "$TF_STATE_BUCKET"
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$TF_VAR_budget_alert_email"
+          test -n "$TF_VAR_cloudflare_zone_id"
+
+          if [[ -z "$APEX_RECORD_ID" && -z "$WWW_RECORD_ID" ]]; then
+            echo "Provide at least one record ID from a discovery run." >&2
+            exit 1
+          fi
+
+          validate_record() {
+            local record_id="$1"
+            local expected_name="$2"
+
+            if [[ ! "$record_id" =~ ^[0-9a-fA-F]{32}$ ]]; then
+              echo "Record ID for ${expected_name} must be 32 hexadecimal characters." >&2
+              exit 1
+            fi
+
+            local response
+            response="$(
+              curl --fail-with-body --silent --show-error \
+                "https://api.cloudflare.com/client/v4/zones/${TF_VAR_cloudflare_zone_id}/dns_records/${record_id}" \
+                --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+            )"
+
+            jq -e '.success == true' <<<"$response" >/dev/null
+            local actual_name
+            local actual_type
+            actual_name="$(jq -r '.result.name' <<<"$response")"
+            actual_type="$(jq -r '.result.type' <<<"$response")"
+
+            if [[ "$actual_name" != "$expected_name" ]]; then
+              echo "Record ${record_id} belongs to ${actual_name}, not ${expected_name}." >&2
+              exit 1
+            fi
+
+            if [[ "$actual_type" != "A" && "$actual_type" != "AAAA" && "$actual_type" != "CNAME" ]]; then
+              echo "Record ${record_id} has unsupported type ${actual_type}." >&2
+              exit 1
+            fi
+          }
+
+          if [[ -n "$APEX_RECORD_ID" ]]; then
+            validate_record "$APEX_RECORD_ID" codehawks.org
+          fi
+          if [[ -n "$WWW_RECORD_ID" ]]; then
+            validate_record "$WWW_RECORD_ID" www.codehawks.org
+          fi
+
+      - name: Get short-lived AWS credentials
+        uses: aws-actions/configure-aws-credentials@cabfdba3510de1431bac9dba27511d97497fc100 # v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: codehawks-dns-import-${{ github.run_id }}
+
+      - name: Initialize remote state
+        run: terraform init -backend-config="bucket=$TF_STATE_BUCKET"
+
+      - name: Confirm selected records are not already managed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_unmanaged() {
+            local address="$1"
+            if terraform state show "$address" >/dev/null 2>&1; then
+              echo "${address} is already present in Terraform state; refusing to overwrite it." >&2
+              exit 1
+            fi
+          }
+
+          if [[ -n "$APEX_RECORD_ID" ]]; then
+            check_unmanaged cloudflare_dns_record.apex
+          fi
+          if [[ -n "$WWW_RECORD_ID" ]]; then
+            check_unmanaged cloudflare_dns_record.www
+          fi
+
+      - name: Import selected records
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -n "$APEX_RECORD_ID" ]]; then
+            terraform import -input=false \
+              cloudflare_dns_record.apex \
+              "${TF_VAR_cloudflare_zone_id}/${APEX_RECORD_ID}"
+          fi
+
+          if [[ -n "$WWW_RECORD_ID" ]]; then
+            terraform import -input=false \
+              cloudflare_dns_record.www \
+              "${TF_VAR_cloudflare_zone_id}/${WWW_RECORD_ID}"
+          fi
+
+      - name: Show imported resource addresses
+        run: terraform state list | grep '^cloudflare_dns_record\.'

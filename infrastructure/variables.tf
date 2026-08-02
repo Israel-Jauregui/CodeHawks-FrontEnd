@@ -27,10 +27,32 @@ variable "github_owner" {
   default     = "Israel-Jauregui"
 }
 
+variable "github_owner_id" {
+  description = "Immutable GitHub account ID included in OIDC subject claims."
+  type        = string
+  default     = "29392107"
+
+  validation {
+    condition     = can(regex("^[0-9]+$", var.github_owner_id))
+    error_message = "github_owner_id must contain only digits."
+  }
+}
+
 variable "frontend_repository" {
   description = "Repository allowed to assume the frontend deployment role."
   type        = string
   default     = "CodeHawks-FrontEnd"
+}
+
+variable "frontend_repository_id" {
+  description = "Immutable GitHub repository ID included in OIDC subject claims."
+  type        = string
+  default     = "1319366708"
+
+  validation {
+    condition     = can(regex("^[0-9]+$", var.frontend_repository_id))
+    error_message = "frontend_repository_id must contain only digits."
+  }
 }
 
 variable "frontend_environment" {

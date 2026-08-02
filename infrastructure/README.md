@@ -59,13 +59,19 @@ Environment secrets:
 - `CLOUDFLARE_API_TOKEN`
 - `TF_VAR_BUDGET_ALERT_EMAIL`
 
-After the first frontend and Terraform CI checks have appeared in GitHub, run `./scripts/configure-github.sh` as the authenticated owner. The script makes `main` PR-only, requires both checks, blocks force pushes/deletion, applies protection to the owner, makes workflow tokens read-only, and creates separate owner-approved `frontend-production` and `infrastructure-production` environments.
+After the first frontend and Terraform CI checks have appeared in GitHub, run `./infrastructure/scripts/configure-github.sh` from the repository root as the authenticated owner. The script makes `main` PR-only, requires both checks, blocks force pushes/deletion, applies protection to the owner, makes workflow tokens read-only, and creates separate owner-approved `frontend-production` and `infrastructure-production` environments.
 
 ## 3. Apply the site
 
 Merge infrastructure changes into `main`, start **Apply infrastructure** from the GitHub Actions page, then approve the separate `infrastructure-production` gate. Terraform creates the site and returns its deployment values. An infrastructure apply never starts automatically from a push.
 
-If Cloudflare already has apex or `www` records for the old VPS, import those records into `cloudflare_dns_record.apex` and `cloudflare_dns_record.www` before the first apply. This allows Terraform to update them only after CloudFront is ready instead of failing because the records already exist.
+Before the first apply, run **Import existing Cloudflare DNS** from the GitHub Actions page with `operation` set to `discover`, then approve the `infrastructure-production` gate. The discovery job only reads Cloudflare and prints any `A`, `AAAA`, or `CNAME` records for the apex and `www` hostnames.
+
+- If neither hostname has an existing web record, skip the import workflow and continue with the apply.
+- If each hostname has one existing record, rerun **Import existing Cloudflare DNS** with `operation` set to `import` and paste the record IDs printed by discovery. Leave an input empty when that hostname has no existing record.
+- If discovery prints multiple web records for one hostname, do not import one arbitrarily. Remove any obsolete duplicate records in the Cloudflare dashboard until one intended record remains, run discovery again, and then import that record.
+
+The import job validates that every supplied ID belongs to the expected hostname before it writes the remote Terraform state. It does not change live DNS. The later approved infrastructure apply updates the imported records only after CloudFront is ready.
 
 The approved apply workflow prints the non-secret deployment outputs. Copy `frontend_deploy_role_arn`, `site_bucket_name`, and `cloudfront_distribution_id`, then either enter them in the `frontend-production` environment through GitHub settings or run this GitHub-only helper:
 
@@ -73,7 +79,7 @@ The approved apply workflow prints the non-secret deployment outputs. Copy `fron
 AWS_ROLE_ARN="copied-role-arn" \
 S3_BUCKET="copied-bucket-name" \
 CLOUDFRONT_DISTRIBUTION_ID="copied-distribution-id" \
-./scripts/configure-frontend-deployment.sh
+./infrastructure/scripts/configure-frontend-deployment.sh
 ```
 
 The helper only updates GitHub environment variables. It does not read Terraform state or contact AWS.
