@@ -108,6 +108,7 @@ Resources:
               - iam:GetPolicyVersion
               - iam:GetRole
               - iam:GetRolePolicy
+              - iam:ListAttachedRolePolicies
               - iam:ListPolicyVersions
               - iam:ListRolePolicies
               - iam:PassRole
@@ -193,6 +194,7 @@ Resources:
                   - iam:DeleteRolePolicy
                   - iam:GetRole
                   - iam:GetRolePolicy
+                  - iam:ListAttachedRolePolicies
                   - iam:ListRolePolicies
                   - iam:PassRole
                   - iam:PutRolePolicy

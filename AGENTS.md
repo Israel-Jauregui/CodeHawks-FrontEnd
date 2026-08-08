@@ -31,6 +31,17 @@ npm run preview    # preview production build
 - After initial bootstrap, changes to that stack use the manual `Update AWS bootstrap` workflow. Frontend and Terraform deployments remain separate, owner-reviewed GitHub environments.
 - Never add AWS access keys to GitHub. Workflows must use short-lived OIDC sessions.
 
+### Deployment Progress (updated August 8, 2026)
+
+- [x] Create/update the `codehawks-bootstrap` CloudFormation stack through the approved bootstrap process.
+- [x] Run the **Import existing Cloudflare DNS** discovery/import workflow so the existing apex and `www` records are represented in Terraform state.
+- [x] Attempt the first **Apply infrastructure** run from protected `main`. Run `30767214671` failed during `terraform apply` on August 2, 2026 after partially creating the production infrastructure; its output-publishing step was skipped.
+- [ ] Inspect the failed apply log, correct the specific Terraform/AWS error, and rerun **Apply infrastructure** through the `infrastructure-production` environment. Do not apply from a developer machine.
+- [ ] Copy the successful apply outputs (`aws_region`, `frontend_deploy_role_arn`, `site_bucket_name`, and `cloudfront_distribution_id`) into the matching `frontend-production` environment variables.
+- [ ] Manually run **Deploy frontend**, approve the `frontend-production` environment gate, and verify the production URLs listed in `infrastructure/README.md`.
+
+Current live state: both `codehawks.org` and `www.codehawks.org` resolve to the partially created CloudFront distribution, but requests return `403` from its S3 origin because the frontend has not been deployed. The immediate next step is to diagnose the failed apply before rerunning it. Do not rerun DNS import unless the Cloudflare records changed or the earlier import did not complete successfully.
+
 ## Architecture
 ```text
 index.html          → Vite entrypoint, loads /src/main.jsx
