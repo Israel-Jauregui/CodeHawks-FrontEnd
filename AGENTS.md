@@ -37,11 +37,12 @@ npm run preview    # preview production build
 - [x] Run the **Import existing Cloudflare DNS** discovery/import workflow so the existing apex and `www` records are represented in Terraform state.
 - [x] Attempt the first **Apply infrastructure** run from protected `main`. Run `30767214671` failed during `terraform apply` on August 2, 2026 after partially creating the production infrastructure; its output-publishing step was skipped.
 - [x] Correct the first failure by allowing Terraform to call `iam:ListAttachedRolePolicies`, then deploy that bootstrap update through run `31258878313`.
-- [ ] Correct retry run `31259037017`, which failed while recovering the tainted frontend role because `iam:ListInstanceProfilesForRole` was not allowed; deploy the follow-up bootstrap update, then rerun **Apply infrastructure** through the `infrastructure-production` environment. Do not apply from a developer machine.
-- [ ] Copy the successful apply outputs (`aws_region`, `frontend_deploy_role_arn`, `site_bucket_name`, and `cloudfront_distribution_id`) into the matching `frontend-production` environment variables.
-- [ ] Manually run **Deploy frontend**, approve the `frontend-production` environment gate, and verify the production URLs listed in `infrastructure/README.md`.
+- [x] Correct retry run `31259037017` by allowing Terraform to call `iam:ListInstanceProfilesForRole`, deploy the follow-up bootstrap update through run `31259263012`, and complete infrastructure apply run `31259340864` successfully.
+- [x] Copy the successful apply outputs (`aws_region`, `frontend_deploy_role_arn`, `site_bucket_name`, and `cloudfront_distribution_id`) into the matching `frontend-production` environment variables.
+- [x] Enable **Deploy frontend**, approve the `frontend-production` environment gate, and complete production deployment run `31259463670` successfully.
+- [x] Verify both HTTPS hostnames, the deep `/projects` SPA route, the HTTP-to-HTTPS redirect, and denial of direct anonymous S3 access.
 
-Current live state: both `codehawks.org` and `www.codehawks.org` resolve to the partially created CloudFront distribution, but requests return `403` from its S3 origin because the frontend has not been deployed. The immediate next step is to diagnose the failed apply before rerunning it. Do not rerun DNS import unless the Cloudflare records changed or the earlier import did not complete successfully.
+Current live state: the frontend AWS migration is complete. Both `https://codehawks.org` and `https://www.codehawks.org` serve the production application through CloudFront, deep SPA paths resolve to `index.html`, HTTP redirects to HTTPS, and the S3 origin remains private. Future infrastructure and frontend changes must continue through their separate manual, owner-approved GitHub workflows. Do not rerun DNS import unless the Cloudflare records change or Terraform state must adopt a replacement record.
 
 ## Architecture
 ```text
