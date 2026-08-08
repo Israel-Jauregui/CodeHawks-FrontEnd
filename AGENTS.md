@@ -36,7 +36,8 @@ npm run preview    # preview production build
 - [x] Create/update the `codehawks-bootstrap` CloudFormation stack through the approved bootstrap process.
 - [x] Run the **Import existing Cloudflare DNS** discovery/import workflow so the existing apex and `www` records are represented in Terraform state.
 - [x] Attempt the first **Apply infrastructure** run from protected `main`. Run `30767214671` failed during `terraform apply` on August 2, 2026 after partially creating the production infrastructure; its output-publishing step was skipped.
-- [ ] Inspect the failed apply log, correct the specific Terraform/AWS error, and rerun **Apply infrastructure** through the `infrastructure-production` environment. Do not apply from a developer machine.
+- [x] Correct the first failure by allowing Terraform to call `iam:ListAttachedRolePolicies`, then deploy that bootstrap update through run `31258878313`.
+- [ ] Correct retry run `31259037017`, which failed while recovering the tainted frontend role because `iam:ListInstanceProfilesForRole` was not allowed; deploy the follow-up bootstrap update, then rerun **Apply infrastructure** through the `infrastructure-production` environment. Do not apply from a developer machine.
 - [ ] Copy the successful apply outputs (`aws_region`, `frontend_deploy_role_arn`, `site_bucket_name`, and `cloudfront_distribution_id`) into the matching `frontend-production` environment variables.
 - [ ] Manually run **Deploy frontend**, approve the `frontend-production` environment gate, and verify the production URLs listed in `infrastructure/README.md`.
 
