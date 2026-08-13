@@ -27,3 +27,8 @@ output "frontend_deploy_role_arn" {
   description = "OIDC role configured in the frontend production environment."
   value       = aws_iam_role.frontend_deploy.arn
 }
+
+output "ses_dkim_record_names" {
+  description = "Cloudflare DNS names published for the backend-owned SES identity."
+  value       = sort([for record in cloudflare_dns_record.ses_dkim : record.name])
+}

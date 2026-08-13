@@ -1,155 +1,151 @@
-import { mockMembers, mockProjects, mockTeams } from '../data/mockClubData';
+import { mockEvents, mockMembers, mockProjects, mockTeams } from '../data/mockClubData';
 import type {
   ClubDataProvider,
   CreateProjectInput,
   JoinRequestStatus,
   Project,
+  Team,
+  TeamJoinStatus,
 } from '../types/clubData';
 
-const LOCAL_FETCH_DELAY_MS = 220;
-const PROJECTS_STORAGE_KEY = 'clubWebsite.projects.v1';
-const PROJECT_JOIN_REQUESTS_STORAGE_KEY = 'clubWebsite.projectJoinRequests.v1';
+const LOCAL_FETCH_DELAY_MS = 160;
+const PROJECTS_STORAGE_KEY = 'clubWebsite.projects.v2';
+const TEAMS_STORAGE_KEY = 'clubWebsite.teams.v2';
+const PROJECT_JOIN_REQUESTS_STORAGE_KEY = 'clubWebsite.projectJoinRequests.v2';
+const TEAM_JOIN_REQUESTS_STORAGE_KEY = 'clubWebsite.teamJoinRequests.v2';
 
 let cachedProjects: Project[] | null = null;
+let cachedTeams: Team[] | null = null;
 
-function readProjectsFromStorage(): Project[] | null {
-  const storedProjects = window.localStorage.getItem(PROJECTS_STORAGE_KEY);
-
-  if (!storedProjects) {
-    return null;
-  }
-
+function readArray<T>(key: string): T[] | null {
+  const value = window.localStorage.getItem(key);
+  if (!value) return null;
   try {
-    const parsedProjects = JSON.parse(storedProjects) as Project[];
-    return Array.isArray(parsedProjects) ? parsedProjects : null;
+    const parsed = JSON.parse(value) as T[];
+    return Array.isArray(parsed) ? parsed : null;
   } catch {
     return null;
   }
 }
 
-function writeProjectsToStorage(projects: Project[]) {
-  window.localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+function writeArray<T>(key: string, value: T[]) {
+  window.localStorage.setItem(key, JSON.stringify(value));
 }
 
 function getProjectsStore(): Project[] {
-  if (cachedProjects) {
-    return cachedProjects;
-  }
-
-  const storedProjects = readProjectsFromStorage();
-
-  if (storedProjects && storedProjects.length > 0) {
-    cachedProjects = storedProjects;
-    return cachedProjects;
-  }
-
-  cachedProjects = [...mockProjects];
-  writeProjectsToStorage(cachedProjects);
+  cachedProjects ??= readArray<Project>(PROJECTS_STORAGE_KEY) ?? [...mockProjects];
   return cachedProjects;
 }
 
-function getNextProjectId(projects: Project[]): number {
-  if (projects.length === 0) {
-    return 1;
-  }
-
-  return Math.max(...projects.map((project) => project.projectId)) + 1;
+function getTeamsStore(): Team[] {
+  cachedTeams ??= readArray<Team>(TEAMS_STORAGE_KEY) ?? [...mockTeams];
+  return cachedTeams;
 }
 
-function readJoinRequestsFromStorage(): Record<string, string[]> {
-  const serialized = window.localStorage.getItem(PROJECT_JOIN_REQUESTS_STORAGE_KEY);
-
-  if (!serialized) {
-    return {};
-  }
-
+function readJoinRequests(key: string): Record<string, boolean> {
   try {
-    const parsed = JSON.parse(serialized) as Record<string, string[]>;
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    return JSON.parse(window.localStorage.getItem(key) ?? '{}') as Record<string, boolean>;
   } catch {
     return {};
   }
 }
 
-function writeJoinRequestsToStorage(value: Record<string, string[]>) {
-  window.localStorage.setItem(PROJECT_JOIN_REQUESTS_STORAGE_KEY, JSON.stringify(value));
+function writeJoinRequests(key: string, value: Record<string, boolean>) {
+  window.localStorage.setItem(key, JSON.stringify(value));
 }
 
 function simulateLocalFetch<T>(value: T): Promise<T> {
-  return new Promise((resolve) => {
-    window.setTimeout(() => resolve(value), LOCAL_FETCH_DELAY_MS);
-  });
+  return new Promise((resolve) => window.setTimeout(() => resolve(value), LOCAL_FETCH_DELAY_MS));
+}
+
+function localId(): string {
+  return crypto.randomUUID();
 }
 
 export const localClubDataProvider: ClubDataProvider = {
   getProjects: async () => simulateLocalFetch([...getProjectsStore()]),
 
   createProject: async (input: CreateProjectInput) => {
-    const projects = getProjectsStore();
-
-    const createdProject: Project = {
-      projectId: getNextProjectId(projects),
-      projectName: input.projectName,
-      projectDesc: input.projectDesc,
-      projectPicsUrl: input.projectPicsUrl ?? null,
-      repoLink: input.repoLink ?? null,
-      memberUsernames: input.memberUsernames,
+    const timestamp = new Date().toISOString();
+    const invitedHandles = mockMembers
+      .filter((member) => input.inviteeIds.includes(member.id))
+      .map((member) => member.handle);
+    const project: Project = {
+      id: localId(),
+      name: input.name,
+      description: input.description,
+      ...(input.repoUrl ? { repoUrl: input.repoUrl } : {}),
+      ...(input.imageFile
+        ? { imageUrl: URL.createObjectURL(input.imageFile) }
+        : input.imageUrl ? { imageUrl: input.imageUrl } : {}),
+      ...(input.demoUrl ? { demoUrl: input.demoUrl } : {}),
+      techStack: input.techStack,
+      status: input.submitForReview ? 'pending_review' : 'draft',
+      memberHandles: ['local-demo', ...invitedHandles],
+      createdAt: timestamp,
+      updatedAt: timestamp,
     };
-
-    cachedProjects = [createdProject, ...projects];
-    writeProjectsToStorage(cachedProjects);
-
-    return simulateLocalFetch(createdProject);
+    cachedProjects = [project, ...getProjectsStore()];
+    writeArray(PROJECTS_STORAGE_KEY, cachedProjects);
+    return simulateLocalFetch({ project, invitationErrors: [] });
   },
 
   searchMembers: async (query) => {
     const normalizedQuery = query.trim().toLowerCase();
-
-    if (!normalizedQuery) {
-      return simulateLocalFetch([]);
-    }
-
-    const members = mockMembers.filter((member) => {
-      return (
-        member.username.toLowerCase().includes(normalizedQuery)
-        || member.fullname.toLowerCase().includes(normalizedQuery)
-      );
-    });
-
-    return simulateLocalFetch(members.slice(0, 8));
+    const results = normalizedQuery
+      ? mockMembers.filter((member) =>
+          member.handle.toLowerCase().includes(normalizedQuery)
+          || member.displayName.toLowerCase().includes(normalizedQuery))
+      : [];
+    return simulateLocalFetch(results.slice(0, 8));
   },
 
-  requestToJoinProject: async (projectId, username) => {
-    const projects = getProjectsStore();
-    const targetProject = projects.find((project) => project.projectId === projectId);
-
-    if (!targetProject) {
-      throw new Error('Project not found.');
-    }
-
-    if (targetProject.memberUsernames.includes(username)) {
+  requestToJoinProject: async (projectId) => {
+    const project = getProjectsStore().find((candidate) => candidate.id === projectId);
+    if (!project) throw new Error('Project not found.');
+    if (project.memberHandles.includes('local-demo')) {
       return simulateLocalFetch<JoinRequestStatus>('already-member');
     }
-
-    const joinRequestsByProject = readJoinRequestsFromStorage();
-    const projectKey = String(projectId);
-    const existingRequests = joinRequestsByProject[projectKey] ?? [];
-
-    if (existingRequests.includes(username)) {
-      return simulateLocalFetch<JoinRequestStatus>('already-requested');
-    }
-
-    joinRequestsByProject[projectKey] = [...existingRequests, username];
-    writeJoinRequestsToStorage(joinRequestsByProject);
-
+    const requests = readJoinRequests(PROJECT_JOIN_REQUESTS_STORAGE_KEY);
+    if (requests[projectId]) return simulateLocalFetch<JoinRequestStatus>('already-requested');
+    requests[projectId] = true;
+    writeJoinRequests(PROJECT_JOIN_REQUESTS_STORAGE_KEY, requests);
     return simulateLocalFetch<JoinRequestStatus>('requested');
   },
 
-  getTeams: async () => simulateLocalFetch(mockTeams),
+  getTeams: async () => simulateLocalFetch([...getTeamsStore()]),
 
-  getMembersByUsernames: async (usernames) => {
-    const uniqueUsernames = new Set(usernames);
-    const members = mockMembers.filter((member) => uniqueUsernames.has(member.username));
-    return simulateLocalFetch(members);
+  createTeam: async (input) => {
+    const timestamp = new Date().toISOString();
+    const { imageFile, ...teamInput } = input;
+    const team: Team = {
+      id: localId(),
+      ...teamInput,
+      ...(imageFile ? { imageUrl: URL.createObjectURL(imageFile) } : {}),
+      status: 'open',
+      memberCount: 1,
+      memberHandles: ['local-demo'],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    cachedTeams = [team, ...getTeamsStore()];
+    writeArray(TEAMS_STORAGE_KEY, cachedTeams);
+    return simulateLocalFetch({ team });
   },
+
+  requestToJoinTeam: async (teamId) => {
+    const team = getTeamsStore().find((candidate) => candidate.id === teamId);
+    if (!team) throw new Error('Team not found.');
+    if (team.memberHandles.includes('local-demo')) {
+      return simulateLocalFetch<TeamJoinStatus>('already-member');
+    }
+    const requests = readJoinRequests(TEAM_JOIN_REQUESTS_STORAGE_KEY);
+    if (requests[teamId]) return simulateLocalFetch<TeamJoinStatus>('already-requested');
+    requests[teamId] = true;
+    writeJoinRequests(TEAM_JOIN_REQUESTS_STORAGE_KEY, requests);
+    return simulateLocalFetch<TeamJoinStatus>(team.joinPolicy === 'open' ? 'joined' : 'requested');
+  },
+
+  getEvents: async () => simulateLocalFetch([...mockEvents]),
+  setEventRsvp: async () => simulateLocalFetch(undefined),
 };

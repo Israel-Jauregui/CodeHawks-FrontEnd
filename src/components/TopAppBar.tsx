@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
+import { canManageEvents } from '../auth/permissions';
+import type { BrowserRoute } from './browser/hooks/useBrowserNavigation';
 import './TopAppBar.css';
 
 /**
@@ -64,14 +67,10 @@ interface TopAppBarProps {
   onTitleBarPointerCancel?: React.PointerEventHandler<HTMLDivElement>;
   /** Callback fired when Login is clicked. */
   onLoginClick?: () => void;
-  /** Username if logged in, null/undefined if not. */
-  username?: string | null;
-  /** Callback fired when Logout is clicked. */
-  onLogout?: () => void;
   /** Hide login dropdown/button for standalone pages like Projects. */
   showAuthButton?: boolean;
-  /** Navigate to an internal browser route (home/projects/team). */
-  onNavigateRoute?: (route: 'home' | 'projects' | 'team') => void;
+  /** Navigate to an internal browser route. */
+  onNavigateRoute?: (route: BrowserRoute) => void;
   /** Navigate to an in-page section within the home module. */
   onNavigateSection?: (sectionId: 'about' | 'events' | 'contact') => void;
   /** Browser history back action. */
@@ -96,8 +95,6 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   onTitleBarPointerUp,
   onTitleBarPointerCancel,
   onLoginClick,
-  username,
-  onLogout,
   showAuthButton = true,
   onNavigateRoute,
   onNavigateSection,
@@ -107,6 +104,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   canGoForward = false,
   currentAddress = 'http://www.codehawks.org/home',
 }) => {
+  const { user, isLoading: isAuthLoading, logout, unreadCount } = useAuth();
   // Dropdown state for user menu
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   // ── State ──────────────────────────────────────────────────────
@@ -174,67 +172,59 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
         onPointerCancel={onTitleBarPointerCancel}
       >
         <div className="title-bar-text">{title}</div>
-        {showAuthButton && (username ? (
-          <div className="user-dropdown-wrapper" style={{ position: 'relative', display: 'inline-block' }}>
+        {showAuthButton && (user ? (
+          <div className="user-dropdown-wrapper">
             <button
               className="join-button"
-              style={{ cursor: 'pointer' }}
               onClick={() => setUserMenuOpen((v) => !v)}
               aria-haspopup="true"
               aria-expanded={userMenuOpen}
-              tabIndex={0}
             >
-              {username}
+              @{user.handle}{unreadCount > 0 ? ` (${unreadCount})` : ''}
             </button>
             {userMenuOpen && (
-              <div
-                className="user-dropdown-menu"
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  background: '#fff',
-                  border: '1.5px solid #316ac5',
-                  borderRadius: 4,
-                  minWidth: 120,
-                  zIndex: 1000,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                  fontFamily: 'Tahoma, Microsoft Sans Serif, Arial, sans-serif',
-                }}
-                onMouseLeave={() => setUserMenuOpen(false)}
-              >
+              <div className="user-dropdown-menu" onMouseLeave={() => setUserMenuOpen(false)}>
+                <div className="user-dropdown-summary">
+                  <strong>{user.displayName}</strong>
+                  <span>{user.role.replaceAll('_', ' ')}</span>
+                </div>
                 <button
                   className="user-dropdown-item"
-                  style={{
-                    width: '100%',
-                    background: 'none',
-                    border: 'none',
-                    padding: '0.5em 1em',
-                    textAlign: 'left',
-                    cursor: 'not-allowed',
-                    fontSize: '1em',
-                    color: '#7a7a7a',
-                  }}
                   type="button"
-                  disabled
-                  title="Profile is not implemented yet"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    onNavigateRoute?.('profile');
+                  }}
                 >
                   View profile
                 </button>
                 <button
                   className="user-dropdown-item"
-                  style={{
-                    width: '100%',
-                    background: 'none',
-                    border: 'none',
-                    padding: '0.5em 1em',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '1em',
-                  }}
+                  type="button"
                   onClick={() => {
                     setUserMenuOpen(false);
-                    onLogout && onLogout();
+                    onNavigateRoute?.('notifications');
+                  }}
+                >
+                  Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
+                </button>
+                {canManageEvents(user.role) && (
+                  <button
+                    className="user-dropdown-item"
+                    type="button"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      onNavigateRoute?.('event-manager');
+                    }}
+                  >
+                    Manage events
+                  </button>
+                )}
+                <button
+                  className="user-dropdown-item"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    void logout();
                   }}
                 >
                   Log out
@@ -243,7 +233,9 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             )}
           </div>
         ) : (
-          <button className="join-button" onClick={onLoginClick}>Login</button>
+          <button className="join-button" onClick={onLoginClick} disabled={isAuthLoading}>
+            {isAuthLoading ? 'Connecting...' : 'Login'}
+          </button>
         ))}
         <div className="title-bar-controls">
           <button aria-label="Minimize" onClick={onMinimize}></button>
@@ -458,76 +450,16 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
           </div>
           {showAuthButton && (
             <div className="mobile-menu-action">
-              {username ? (
-              <div className="user-dropdown-wrapper" style={{ position: 'relative', display: 'inline-block' }}>
-                <button
-                  className="join-button"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setUserMenuOpen((v) => !v)}
-                  aria-haspopup="true"
-                  aria-expanded={userMenuOpen}
-                  tabIndex={0}
-                >
-                  {username}
-                </button>
-                {userMenuOpen && (
-                  <div
-                    className="user-dropdown-menu"
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      right: 0,
-                      background: '#fff',
-                      border: '1.5px solid #316ac5',
-                      borderRadius: 4,
-                      minWidth: 120,
-                      zIndex: 1000,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                      fontFamily: 'Tahoma, Microsoft Sans Serif, Arial, sans-serif',
-                }}
-                onMouseLeave={() => setUserMenuOpen(false)}
-              >
-                <button
-                  className="user-dropdown-item"
-                  style={{
-                    width: '100%',
-                    background: 'none',
-                    border: 'none',
-                    padding: '0.5em 1em',
-                    textAlign: 'left',
-                    cursor: 'not-allowed',
-                    fontSize: '1em',
-                    color: '#7a7a7a',
-                  }}
-                  type="button"
-                  disabled
-                  title="Profile is not implemented yet"
-                >
-                  View profile
-                </button>
-                <button
-                  className="user-dropdown-item"
-                  style={{
-                    width: '100%',
-                    background: 'none',
-                        border: 'none',
-                        padding: '0.5em 1em',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: '1em',
-                      }}
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        onLogout && onLogout();
-                      }}
-                    >
-                      Log out
-                    </button>
-                  </div>
-                )}
+              {user ? (
+                <div className="mobile-auth-actions">
+                  <strong>@{user.handle}</strong>
+                  <button type="button" className="nav-link" onClick={() => onNavigateRoute?.('profile')}>View profile</button>
+                  <button type="button" className="nav-link" onClick={() => onNavigateRoute?.('notifications')}>Notifications ({unreadCount})</button>
+                  {canManageEvents(user.role) && <button type="button" className="nav-link" onClick={() => onNavigateRoute?.('event-manager')}>Manage events</button>}
+                  <button type="button" className="nav-link" onClick={() => void logout()}>Log out</button>
                 </div>
               ) : (
-                <button className="join-button" onClick={onLoginClick}>Login</button>
+                <button className="join-button" onClick={onLoginClick} disabled={isAuthLoading}>Login</button>
               )}
             </div>
           )}

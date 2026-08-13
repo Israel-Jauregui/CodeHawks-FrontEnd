@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title description">
+  <title id="title">No image attached</title>
+  <desc id="description">Windows XP styled placeholder landscape</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ba7f7"/><stop offset="1" stop-color="#cce9ff"/></linearGradient>
+    <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fc640"/><stop offset="1" stop-color="#3c8f25"/></linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#sky)"/>
+  <circle cx="515" cy="78" r="43" fill="#fff7a8" stroke="#f0cd42" stroke-width="5"/>
+  <path d="M0 252 C130 178 214 214 326 237 C436 260 505 197 640 190 V360 H0Z" fill="url(#grass)"/>
+  <g fill="#fff" opacity=".92"><ellipse cx="127" cy="79" rx="66" ry="22"/><ellipse cx="82" cy="89" rx="39" ry="17"/><ellipse cx="171" cy="91" rx="46" ry="18"/></g>
+  <rect x="198" y="118" width="244" height="132" rx="5" fill="#ece9d8" stroke="#245edb" stroke-width="7"/>
+  <rect x="214" y="136" width="212" height="82" fill="#fff" stroke="#7f9db9" stroke-width="4"/>
+  <path d="M231 205 L281 161 L320 195 L350 169 L412 218 H231Z" fill="#77b84a"/>
+  <circle cx="383" cy="158" r="13" fill="#f3cf45"/>
+  <text x="320" y="292" text-anchor="middle" fill="#fff" stroke="#174e9c" stroke-width="3" paint-order="stroke" font-family="Tahoma, sans-serif" font-size="31" font-weight="bold">NO IMAGE ATTACHED</text>
+</svg>

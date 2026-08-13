@@ -83,3 +83,19 @@ variable "enable_flat_rate_waf" {
   type        = bool
   default     = false
 }
+
+variable "ses_dkim_tokens" {
+  description = "The three Easy DKIM tokens output by CodeHawks-Backend. This domain-owning state publishes their Cloudflare CNAME records."
+  type        = set(string)
+  default     = []
+
+  validation {
+    condition = (
+      length(var.ses_dkim_tokens) == 0 ||
+      (length(var.ses_dkim_tokens) == 3 && alltrue([
+        for token in var.ses_dkim_tokens : can(regex("^[a-z0-9]+$", token))
+      ]))
+    )
+    error_message = "ses_dkim_tokens must be empty or contain exactly three lowercase alphanumeric Easy DKIM tokens."
+  }
+}

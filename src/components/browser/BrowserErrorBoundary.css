@@ -1,0 +1,20 @@
+.browser-error {
+  min-height: 320px;
+  padding: 42px;
+  color: #fff;
+  background: #0000aa;
+  font-family: "Lucida Console", "Courier New", monospace;
+}
+
+.browser-error__code {
+  font-size: 48px;
+}
+
+.browser-error h2 {
+  color: #fff;
+  font-size: 20px;
+}
+
+.browser-error button {
+  margin-top: 16px;
+}

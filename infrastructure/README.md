@@ -1,6 +1,6 @@
 # CodeHawks AWS Infrastructure
 
-Terraform for the University of North Georgia App Development Club's static frontend. It creates a private S3 origin, CloudFront, HTTPS, Cloudflare DNS, GitHub OIDC roles, and a $25 monthly AWS Budget. The backend is intentionally out of scope.
+Terraform for the University of North Georgia App Development Club's static frontend. It creates a private S3 origin, CloudFront, HTTPS, Cloudflare DNS, GitHub OIDC roles, and a $25 monthly AWS Budget. Backend compute remains out of scope; this domain-owning state also publishes DKIM records for the backend-owned SES identity.
 
 ## Architecture
 
@@ -53,6 +53,7 @@ Environment variables:
 - `TF_STATE_BUCKET`: CloudFormation output `TerraformStateBucketName`
 - `CLOUDFLARE_ZONE_ID`: the Cloudflare zone ID
 - `ENABLE_FLAT_RATE_WAF`: `false` while the AWS account uses its Free account plan
+- `SES_DKIM_TOKENS`: the exact JSON array printed by the backend Terraform output `ses_dkim_tokens_json`
 
 Environment secrets:
 
@@ -85,6 +86,18 @@ CLOUDFRONT_DISTRIBUTION_ID="copied-distribution-id" \
 The helper only updates GitHub environment variables. It does not read Terraform state or contact AWS.
 
 Enable **Deploy frontend** only after these variables exist. Then start it manually from GitHub Actions and approve the separate `frontend-production` gate; it builds protected `main`, uploads the static files, and invalidates CloudFront.
+
+### SES Easy DKIM handoff
+
+The backend and DNS use separate Terraform states. `CodeHawks-Backend` owns `aws_sesv2_email_identity`; this repository owns every Cloudflare record. On the first email deployment:
+
+1. Apply the reviewed backend plan first and copy its `ses_dkim_tokens_json` output.
+2. Set that exact three-element JSON array as `SES_DKIM_TOKENS` in this repository's `infrastructure-production` environment.
+3. Run **Apply infrastructure** and approve the plan. Terraform creates three unproxied `<token>._domainkey.codehawks.org` CNAMEs pointing to `<token>.dkim.amazonses.com`.
+4. Wait for AWS SES to report successful identity verification and DKIM status in the backend region.
+5. The human owner requests SES production access. This account-level request is intentionally not automated by either Terraform state.
+
+Do not add the CNAMEs by hand. A future Easy DKIM rotation should begin with a reviewed backend plan, followed by updating `SES_DKIM_TOKENS` and applying this state.
 
 ## 4. Move from the AWS Free account plan to durable production
 

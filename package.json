@@ -9,13 +9,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": ""
+    "test": "npm run typecheck"
   },
   "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "@azure/msal-browser": "^5.18.0",
+    "@azure/msal-react": "^5.5.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "xp.css": "^0.2.6"
   },
   "devDependencies": {
@@ -28,6 +31,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
+    "typescript": "^7.0.2",
     "vite": "^7.1.7"
   }
 }
