@@ -2,17 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { clubDataProvider } from '../services/clubDataProvider';
 import type {
   CreateProjectInput,
+  CreateProjectResult,
   JoinRequestStatus,
   MemberSummary,
   Project,
 } from '../types/clubData';
 
-export interface ProjectWithMembers extends Project {
-  members: MemberSummary[];
-}
-
 interface UseProjectsDataResult {
-  projects: ProjectWithMembers[];
+  projects: Project[];
   isLoading: boolean;
   isSaving: boolean;
   isSearchingMembers: boolean;
@@ -21,27 +18,17 @@ interface UseProjectsDataResult {
   saveError: string | null;
   joinError: string | null;
   reload: () => Promise<void>;
-  addProject: (input: CreateProjectInput) => Promise<Project | null>;
+  addProject: (input: CreateProjectInput) => Promise<CreateProjectResult | null>;
   searchMembers: (query: string) => Promise<MemberSummary[]>;
-  requestToJoin: (projectId: number, username: string) => Promise<JoinRequestStatus | null>;
+  requestToJoin: (projectId: string) => Promise<JoinRequestStatus | null>;
 }
 
-function mapProjectsWithMembers(
-  projects: Project[],
-  members: MemberSummary[],
-): ProjectWithMembers[] {
-  const memberByUsername = new Map(members.map((member) => [member.username, member]));
-
-  return projects.map((project) => ({
-    ...project,
-    members: project.memberUsernames
-      .map((username) => memberByUsername.get(username))
-      .filter((member): member is MemberSummary => Boolean(member)),
-  }));
+function messageFrom(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 export function useProjectsData(): UseProjectsDataResult {
-  const [projects, setProjects] = useState<ProjectWithMembers[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSearchingMembers, setIsSearchingMembers] = useState(false);
@@ -53,20 +40,10 @@ export function useProjectsData(): UseProjectsDataResult {
   const loadProjects = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-
     try {
-      const rawProjects = await clubDataProvider.getProjects();
-      const usernames = Array.from(
-        new Set(rawProjects.flatMap((project) => project.memberUsernames)),
-      );
-      const members = await clubDataProvider.getMembersByUsernames(usernames);
-
-      setProjects(mapProjectsWithMembers(rawProjects, members));
+      setProjects(await clubDataProvider.getProjects());
     } catch (unknownError) {
-      const message = unknownError instanceof Error
-        ? unknownError.message
-        : 'Unable to load projects right now.';
-      setError(message);
+      setError(messageFrom(unknownError, 'Unable to load projects right now.'));
       setProjects([]);
     } finally {
       setIsLoading(false);
@@ -76,16 +53,12 @@ export function useProjectsData(): UseProjectsDataResult {
   const addProject = useCallback(async (input: CreateProjectInput) => {
     setIsSaving(true);
     setSaveError(null);
-
     try {
-      const createdProject = await clubDataProvider.createProject(input);
+      const result = await clubDataProvider.createProject(input);
       await loadProjects();
-      return createdProject;
+      return result;
     } catch (unknownError) {
-      const message = unknownError instanceof Error
-        ? unknownError.message
-        : 'Unable to save project right now.';
-      setSaveError(message);
+      setSaveError(messageFrom(unknownError, 'Unable to save project right now.'));
       return null;
     } finally {
       setIsSaving(false);
@@ -94,7 +67,6 @@ export function useProjectsData(): UseProjectsDataResult {
 
   const searchMembers = useCallback(async (query: string) => {
     setIsSearchingMembers(true);
-
     try {
       return await clubDataProvider.searchMembers(query);
     } finally {
@@ -102,26 +74,20 @@ export function useProjectsData(): UseProjectsDataResult {
     }
   }, []);
 
-  const requestToJoin = useCallback(async (projectId: number, username: string) => {
+  const requestToJoin = useCallback(async (projectId: string) => {
     setIsRequestingJoin(true);
     setJoinError(null);
-
     try {
-      return await clubDataProvider.requestToJoinProject(projectId, username);
+      return await clubDataProvider.requestToJoinProject(projectId);
     } catch (unknownError) {
-      const message = unknownError instanceof Error
-        ? unknownError.message
-        : 'Unable to request to join right now.';
-      setJoinError(message);
+      setJoinError(messageFrom(unknownError, 'Unable to request to join right now.'));
       return null;
     } finally {
       setIsRequestingJoin(false);
     }
   }, []);
 
-  useEffect(() => {
-    void loadProjects();
-  }, [loadProjects]);
+  useEffect(() => { void loadProjects(); }, [loadProjects]);
 
   return {
     projects,

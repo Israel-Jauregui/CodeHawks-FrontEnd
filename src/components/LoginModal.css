@@ -31,6 +31,46 @@
   flex-direction: column;
   gap: 1.1rem;
 }
+
+.login-form > div:not(.login-actions):not(.login-error) {
+  width: 100%;
+}
+
+.login-form h3 {
+  margin: 0 0 6px;
+  color: #003399;
+}
+
+.login-form p {
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.login-microsoft-icon {
+  width: 42px !important;
+  display: grid;
+  grid-template-columns: repeat(2, 18px);
+  gap: 3px;
+  align-self: center;
+}
+
+.login-microsoft-icon span {
+  width: 18px;
+  height: 18px;
+  background: #f25022;
+}
+
+.login-microsoft-icon span:nth-child(2) { background: #7fba00; }
+.login-microsoft-icon span:nth-child(3) { background: #00a4ef; }
+.login-microsoft-icon span:nth-child(4) { background: #ffb900; }
+
+.login-privacy-note {
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px solid #aca899;
+  color: #555;
+  font-size: 11px;
+}
 .login-form label {
   font-size: 1rem;
   color: #222;

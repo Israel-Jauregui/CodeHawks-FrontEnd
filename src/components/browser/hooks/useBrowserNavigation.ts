@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-export type BrowserRoute = 'home' | 'projects' | 'team';
+export type BrowserRoute = 'home' | 'projects' | 'team' | 'profile' | 'notifications' | 'event-manager';
 
 interface BrowserNavigationState {
   currentRoute: BrowserRoute;
@@ -24,10 +24,18 @@ const ROUTE_ADDRESS_MAP: Record<BrowserRoute, string> = {
   home: 'http://www.codehawks.org/home',
   projects: 'http://www.codehawks.org/projects',
   team: 'http://www.codehawks.org/team',
+  profile: 'http://www.codehawks.org/profile',
+  notifications: 'http://www.codehawks.org/notifications',
+  'event-manager': 'http://www.codehawks.org/manage/events',
 };
 
 function isValidBrowserRoute(value: unknown): value is BrowserRoute {
-  return value === 'home' || value === 'projects' || value === 'team';
+  return value === 'home'
+    || value === 'projects'
+    || value === 'team'
+    || value === 'profile'
+    || value === 'notifications'
+    || value === 'event-manager';
 }
 
 function readNavigationStateFromSession(): BrowserNavigationState | null {

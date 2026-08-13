@@ -158,6 +158,30 @@
   box-shadow: 0 1px 4px #316ac533;
 }
 
+.event-rsvp-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.event-rsvp-actions button.is-selected {
+  border-color: #1f4f99 #9fc8ff #9fc8ff #1f4f99;
+  background: #dcecff;
+}
+
+.event-rsvp-actions span,
+.event-rsvp-message {
+  font-size: 11px;
+  color: #315b8a;
+}
+
+.event-rsvp-message--error,
+.event-card--error {
+  color: #8b0000;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
  * PROJECTS SECTION — XP CONSISTENT CARD GRID
  * ═══════════════════════════════════════════════════════════════════ */

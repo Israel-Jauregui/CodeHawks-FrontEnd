@@ -16,7 +16,15 @@ npm run lint
 npm run build
 ```
 
-The application uses local mock club data until the backend migration is ready.
+The application defaults to local mock club data. Copy `.env.example` to `.env.local`, switch
+`VITE_CLUB_DATA_SOURCE` to `api`, and fill in the API Gateway and Microsoft Entra values to
+exercise the serverless backend. The browser sends an Entra API access token—not an ID token—to
+protected `/v1` routes. Public projects, teams, and events do not require sign-in.
+
+Authenticated members can attach JPEG, PNG, or WebP images up to 5 MiB while creating projects
+and teams. The frontend creates the resource, requests its owner-authorized presigned upload,
+uploads directly to private S3, and saves the returned CloudFront URL. Cards use the bundled XP
+placeholder whenever no image is attached or an external image cannot load.
 
 ## Production deployment
 
@@ -28,5 +36,9 @@ The repository stores no AWS access keys. Terraform lives in [`infrastructure/`]
 - `AWS_ROLE_ARN`
 - `S3_BUCKET`
 - `CLOUDFRONT_DISTRIBUTION_ID`
+- `VITE_API_BASE_URL`
+- `VITE_ENTRA_TENANT_ID`
+- `VITE_ENTRA_SPA_CLIENT_ID`
+- `VITE_ENTRA_API_SCOPE`
 
 Production deployments use the version on protected `main`, require a manual dispatch, and require a separate protected-environment approval. The workflow remains disabled until the AWS bootstrap and site apply are complete.

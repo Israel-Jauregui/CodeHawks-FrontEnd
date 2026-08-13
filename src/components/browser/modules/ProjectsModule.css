@@ -112,6 +112,16 @@
   grid-column: 1 / -1;
 }
 
+.projects-module__field--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+}
+
+.projects-module__field--checkbox input {
+  width: auto;
+}
+
 .projects-module__lookup-hint {
   margin: 2px 0 0;
   color: #2f5f91;

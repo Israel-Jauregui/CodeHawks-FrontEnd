@@ -1,0 +1,8 @@
+.resource-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid #7f9db9;
+  background: #dcecff;
+}

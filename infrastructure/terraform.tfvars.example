@@ -3,6 +3,14 @@ budget_alert_email   = "officer@example.com"
 monthly_budget_usd   = 25
 enable_flat_rate_waf = false
 
+# Copy the backend Terraform output named ses_dkim_tokens_json after the backend
+# identity apply. Keep this empty only before that first cross-state handoff.
+ses_dkim_tokens = [
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "cccccccccccccccccccccccccccccccc",
+]
+
 # Immutable GitHub identifiers used in OIDC trust policies. Update only if the
 # deployment repository moves to a different owner or repository.
 github_owner_id          = "29392107"

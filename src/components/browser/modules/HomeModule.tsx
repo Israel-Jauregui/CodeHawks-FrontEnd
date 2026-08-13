@@ -3,6 +3,7 @@ import xpMonitor from '../../../assets/xp-monitor.svg';
 import xpRocket from '../../../assets/xp-rocket.svg';
 import xpPeople from '../../../assets/xp-people.svg';
 import xpTarget from '../../../assets/xp-target.svg';
+import EventsSection from './EventsSection';
 
 const heroArt = [
   ' █████╗ ██████╗  ██████╗',
@@ -115,55 +116,7 @@ export default function HomeModule() {
         </div>
       </section>
 
-      <section id="events" className="events-section">
-        <h2 className="section-heading">
-          <span className="xp-calendar-icon" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="3" y="6" width="26" height="22" rx="5" fill="#fff" stroke="#316ac5" strokeWidth="2"/>
-              <rect x="3" y="6" width="26" height="6" rx="2" fill="#316ac5"/>
-              <rect x="7" y="10" width="18" height="2" rx="1" fill="#7ec8ff"/>
-              <rect x="8" y="15" width="4" height="4" rx="1.2" fill="#eaf3ff" stroke="#316ac5" strokeWidth="1"/>
-              <rect x="14" y="15" width="4" height="4" rx="1.2" fill="#eaf3ff" stroke="#316ac5" strokeWidth="1"/>
-              <rect x="20" y="15" width="4" height="4" rx="1.2" fill="#eaf3ff" stroke="#316ac5" strokeWidth="1"/>
-            </svg>
-          </span>
-          <span className="events-splash-animate">Upcoming Events</span>
-        </h2>
-        <div className="events-list">
-          <fieldset className="event-card">
-            <legend>APR 22</legend>
-            <div className="event-details">
-              <h3>App Development Club Weekly Meeting</h3>
-              <p>
-                Join us for our regular club meeting! We&apos;ll discuss ongoing projects, upcoming opportunities, and help each other with app ideas and coding challenges. All skill levels welcome.
-              </p>
-              <span className="event-time">1:00 PM - 2:00 PM</span>
-            </div>
-          </fieldset>
-
-          <fieldset className="event-card">
-            <legend>APR 24</legend>
-            <div className="event-details">
-              <h3>Code and Coffee</h3>
-              <p>
-                Bring your laptop and your favorite mug! This is a relaxed, social coding session - work on personal projects, get help from peers, or just hang out and chat about tech over coffee.
-              </p>
-              <span className="event-time">12:00 PM - 1:00 PM</span>
-            </div>
-          </fieldset>
-
-          <fieldset className="event-card">
-            <legend>APR 29</legend>
-            <div className="event-details">
-              <h3>Website Launch Party</h3>
-              <p>
-                Celebrate the official launch of our new club website! We&apos;ll demo features, thank contributors, and enjoy snacks and retro themed fun. Everyone is invited, don&apos;t miss it!
-              </p>
-              <span className="event-time">1:00 PM - 2:00 PM</span>
-            </div>
-          </fieldset>
-        </div>
-      </section>
+      <EventsSection />
 
       <section id="contact" className="cta-section">
         <fieldset>

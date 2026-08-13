@@ -114,6 +114,18 @@ resource "aws_acm_certificate_validation" "site" {
   ]
 }
 
+resource "cloudflare_dns_record" "ses_dkim" {
+  for_each = var.ses_dkim_tokens
+
+  zone_id = var.cloudflare_zone_id
+  name    = "${each.value}._domainkey.${var.domain_name}"
+  type    = "CNAME"
+  content = "${each.value}.dkim.amazonses.com"
+  ttl     = 60
+  proxied = false
+  comment = "Managed by CodeHawks Terraform for Amazon SES Easy DKIM"
+}
+
 resource "aws_cloudfront_origin_access_control" "site" {
   name                              = "${local.resource_prefix}-site-oac"
   description                       = "Allow only CodeHawks CloudFront to read the private site bucket"

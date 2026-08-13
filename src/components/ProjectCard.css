@@ -29,6 +29,10 @@
   letter-spacing: 0.5px;
 }
 
+.project-card__image {
+  margin-bottom: 12px;
+}
+
 .project-card__content h3 {
   font-size: 1.15rem;
   color: #003399;

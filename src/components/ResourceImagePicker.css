@@ -1,0 +1,38 @@
+.resource-image-picker {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(240px, 1.3fr);
+  gap: 14px;
+  padding: 10px;
+  border: 1px solid #aca899;
+  background: #f6f5ee;
+}
+
+.resource-image-picker > img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid #7f9db9;
+  background: #dcecff;
+}
+
+.resource-image-picker__controls,
+.resource-image-picker__controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.resource-image-picker__or {
+  color: #666;
+  font-size: 11px;
+  text-align: center;
+}
+
+.resource-image-picker small {
+  color: #555;
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .resource-image-picker { grid-template-columns: 1fr; }
+}

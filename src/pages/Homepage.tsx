@@ -1,11 +1,9 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import TopAppBar from '../components/TopAppBar';
 import LoginModal from '../components/LoginModal';
-import SignupModal from '../components/SignupModal';
 import NighthawkMascot from '../components/NighthawkMascot';
 import BrowserContentHost from '../components/browser/BrowserContentHost';
-import { useBrowserNavigation } from '../components/browser/hooks/useBrowserNavigation';
-import { getUsernameFromJwt } from '../utils/jwt';
+import { useBrowserNavigation, type BrowserRoute } from '../components/browser/hooks/useBrowserNavigation';
 import './Homepage.css';
 
 type DesktopWindowId = 'browser' | 'cwInfo';
@@ -94,13 +92,8 @@ export const Homepage: React.FC = () => {
 
   // ── Login Modal State ───────────────────────────────────────
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isSignupOpen, setIsSignupOpen] = useState(false);
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false);
   const [trayTime, setTrayTime] = useState(() => EASTERN_TIME_FORMATTER.format(new Date()));
-
-  // ── User State (JWT) ────────────────────────────────────────
-  // Holds username if logged in, null otherwise. Decoded from JWT.
-  const [username, setUsername] = useState<string | null>(null);
   const startMenuLinks = [
     {
       id: 'adc-connect',
@@ -115,21 +108,6 @@ export const Homepage: React.FC = () => {
       iconType: 'terminal',
     },
   ] as const;
-
-  const syncUsernameFromToken = () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setUsername(null);
-      return;
-    }
-
-    setUsername(getUsernameFromJwt(token));
-  };
-
-  // On mount, check for JWT in localStorage and decode username
-  useEffect(() => {
-    syncUsernameFromToken();
-  }, []);
 
   useEffect(() => {
     const syncTrayTime = () => {
@@ -173,17 +151,6 @@ export const Homepage: React.FC = () => {
     };
   }, [isStartMenuOpen]);
 
-  // Called after successful login (from LoginModal)
-  const handleLoginSuccess = () => {
-    syncUsernameFromToken();
-    setIsLoginOpen(false);
-  };
-
-  // Logout handler: clear token and user state
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setUsername(null);
-  };
   // ── Window State ──────────────────────────────────────────────
   // Tracks whether the IE browser window is visible on the desktop.
   //
@@ -445,12 +412,12 @@ export const Homepage: React.FC = () => {
     activateWindow(windowId);
   };
 
-  const launchBrowserWithRoute = (route: 'home' | 'projects' | 'team') => {
+  const launchBrowserWithRoute = (route: BrowserRoute) => {
     launchDesktopWindow('browser');
     navigateToRoute(route);
   };
 
-  const handleBrowserRouteNavigation = (route: 'home' | 'projects' | 'team') => {
+  const handleBrowserRouteNavigation = (route: BrowserRoute) => {
     navigateToRoute(route);
   };
 
@@ -678,8 +645,6 @@ export const Homepage: React.FC = () => {
             onTitleBarPointerUp={handleWindowTitleBarPointerUp}
             onTitleBarPointerCancel={stopWindowDrag}
             onLoginClick={() => setIsLoginOpen(true)}
-            username={username}
-            onLogout={handleLogout}
             onNavigateRoute={handleBrowserRouteNavigation}
             onNavigateSection={handleBrowserSectionNavigation}
             onBack={goBack}
@@ -692,24 +657,6 @@ export const Homepage: React.FC = () => {
           <LoginModal
             open={isLoginOpen}
             onClose={() => setIsLoginOpen(false)}
-            onLoginSuccess={handleLoginSuccess}
-            onSwitchToSignup={() => {
-              setIsLoginOpen(false);
-              setIsSignupOpen(true);
-            }}
-          />
-
-          <SignupModal
-            open={isSignupOpen}
-            onClose={() => setIsSignupOpen(false)}
-            onSwitchToLogin={() => {
-              setIsSignupOpen(false);
-              setIsLoginOpen(true);
-            }}
-            onLoginSuccess={() => {
-              handleLoginSuccess();
-              setIsSignupOpen(false);
-            }}
           />
 
           <div className="window-body homepage-body">
@@ -717,6 +664,7 @@ export const Homepage: React.FC = () => {
               route={currentRoute}
               sectionScrollTarget={sectionScrollTarget}
               onSectionScrollHandled={() => setSectionScrollTarget(null)}
+              onNavigateRoute={handleBrowserRouteNavigation}
             />
           </div>
 

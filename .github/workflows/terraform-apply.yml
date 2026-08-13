@@ -25,6 +25,7 @@ jobs:
       TF_VAR_budget_alert_email: ${{ secrets.TF_VAR_BUDGET_ALERT_EMAIL }}
       TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
       TF_VAR_enable_flat_rate_waf: ${{ vars.ENABLE_FLAT_RATE_WAF }}
+      TF_VAR_ses_dkim_tokens: ${{ vars.SES_DKIM_TOKENS }}
 
     steps:
       - name: Checkout approved revision
@@ -45,6 +46,9 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$TF_VAR_budget_alert_email"
           test -n "$TF_VAR_cloudflare_zone_id"
+          test -n "$TF_VAR_ses_dkim_tokens"
+          jq -e 'type == "array" and length == 3 and all(.[]; type == "string" and test("^[a-z0-9]+$"))' \
+            <<<"$TF_VAR_ses_dkim_tokens" >/dev/null
 
       - name: Get short-lived AWS credentials
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
