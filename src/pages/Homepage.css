@@ -536,6 +536,29 @@
   text-shadow: 0 0 2px rgba(255, 247, 166, 0.45);
 }
 
+/* Hacklonega shortcut — a tiny blue-and-gold executable tile that
+   mirrors the event graphic without introducing a separate image asset. */
+.desktop-icon__img--hacklonega {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  margin-top: 2px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  border-color: #92c1e9 #07142e #07142e #92c1e9;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 7px, rgba(146, 193, 233, 0.18) 7px 8px),
+    repeating-linear-gradient(90deg, transparent 0 7px, rgba(146, 193, 233, 0.18) 7px 8px),
+    #1f3d7c;
+  box-shadow: 3px 3px 0 #033aa8, 4px 5px 3px rgba(0, 0, 0, 0.35);
+}
+
+.desktop-icon__img--hacklonega .hacklonega-pixel-ng {
+  transform: scale(1.55);
+  transform-origin: center;
+}
+
 /* ── Icon Label ──────────────────────────────────────────────────── */
 .desktop-icon__label {
   font-family: "Tahoma", "MS Sans Serif", sans-serif;

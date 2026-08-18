@@ -44,7 +44,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
           </div>
           <div>
             <h3>Sign in with Microsoft</h3>
-            <p>Use your <strong>@ung.edu</strong> account. Microsoft handles your password; CodeHawks receives an access token for the club API.</p>
+            <p><strong>@ung.edu account required.</strong></p>
           </div>
           {(error || (!isAvailable && authError)) && <div className="login-error" role="alert">{error || authError}</div>}
           <div className="login-actions">
@@ -53,7 +53,6 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
             </button>
             <button type="button" onClick={onClose} disabled={isLoading} className="xp-btn-secondary">Cancel</button>
           </div>
-          <p className="login-privacy-note">There is no separate CodeHawks password or signup form.</p>
         </div>
       </div>
     </div>
