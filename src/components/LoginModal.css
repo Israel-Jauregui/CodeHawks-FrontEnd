@@ -64,13 +64,6 @@
 .login-microsoft-icon span:nth-child(3) { background: #00a4ef; }
 .login-microsoft-icon span:nth-child(4) { background: #ffb900; }
 
-.login-privacy-note {
-  width: 100%;
-  padding-top: 10px;
-  border-top: 1px solid #aca899;
-  color: #555;
-  font-size: 11px;
-}
 .login-form label {
   font-size: 1rem;
   color: #222;

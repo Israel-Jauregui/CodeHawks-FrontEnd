@@ -2,11 +2,12 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import TopAppBar from '../components/TopAppBar';
 import LoginModal from '../components/LoginModal';
 import NighthawkMascot from '../components/NighthawkMascot';
+import HacklonegaAd, { HacklonegaNgMark } from '../components/HacklonegaAd';
 import BrowserContentHost from '../components/browser/BrowserContentHost';
 import { useBrowserNavigation, type BrowserRoute } from '../components/browser/hooks/useBrowserNavigation';
 import './Homepage.css';
 
-type DesktopWindowId = 'browser' | 'cwInfo';
+type DesktopWindowId = 'browser' | 'cwInfo' | 'hacklonega';
 
 type WindowPosition = {
   x: number;
@@ -63,24 +64,26 @@ const EASTERN_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
  *   │                                                           │
  *   │  ┌── .desktop-icons ──┐                                   │
  *   │  │ [ADC Website]      │   ┌── .window (conditional) ──┐  │
- *   │  │ [Project 1]        │   │ TopAppBar (title bar +     │  │
- *   │  │ [Project 2]        │   │   toolbars)                │  │
- *   │  │ [Project 3]        │   │ Window body (sections)     │  │
+ *   │  │ [Projects]         │   │ TopAppBar (title bar +     │  │
+ *   │  │ [Hacklonega]       │   │   toolbars)                │  │
+ *   │  │                    │   │ Window body (sections)     │  │
  *   │  └────────────────────┘   │ Status bar (footer)        │  │
  *   │                           └────────────────────────────┘  │
  *   └──────────────────────────────────────────────────────────┘
  */
 export const Homepage: React.FC = () => {
-  const DESKTOP_WINDOW_ORDER: DesktopWindowId[] = ['browser', 'cwInfo'];
+  const DESKTOP_WINDOW_ORDER: DesktopWindowId[] = ['browser', 'cwInfo', 'hacklonega'];
   const WINDOW_DISPLAY_NAMES: Record<DesktopWindowId, string> = {
     browser: 'ADC Website',
     cwInfo: 'Coding Warriors',
+    hacklonega: 'Hacklonega',
   };
 
   const desktopRef = useRef<HTMLDivElement | null>(null);
   const desktopWindowRefs = useRef<Record<DesktopWindowId, HTMLDivElement | null>>({
     browser: null,
     cwInfo: null,
+    hacklonega: null,
   });
   const dragStateRef = useRef<{
     windowId: DesktopWindowId;
@@ -174,28 +177,34 @@ export const Homepage: React.FC = () => {
   const [openWindows, setOpenWindows] = useState<DesktopWindowOpenState>({
     browser: true,
     cwInfo: false,
+    hacklonega: false,
   });
   const [minimizedWindows, setMinimizedWindows] = useState<DesktopWindowMinimizedState>({
     browser: false,
     cwInfo: false,
+    hacklonega: false,
   });
   const [maximizedWindows, setMaximizedWindows] = useState<DesktopWindowMaximizedState>({
     browser: false,
     cwInfo: false,
+    hacklonega: false,
   });
   const [activeWindowId, setActiveWindowId] = useState<DesktopWindowId>('browser');
   const [windowOrder, setWindowOrder] = useState<DesktopWindowId[]>(DESKTOP_WINDOW_ORDER);
   const [draggedWindows, setDraggedWindows] = useState<DesktopWindowDraggedState>({
     browser: false,
     cwInfo: false,
+    hacklonega: false,
   });
   const [windowPositions, setWindowPositions] = useState<DesktopWindowPositions>({
     browser: { x: 152, y: 20 },
     cwInfo: { x: 230, y: 68 },
+    hacklonega: { x: 184, y: 36 },
   });
   const [restoreWindowPositions, setRestoreWindowPositions] = useState<DesktopWindowPositions>({
     browser: { x: 152, y: 20 },
     cwInfo: { x: 230, y: 68 },
+    hacklonega: { x: 184, y: 36 },
   });
   const [sectionScrollTarget, setSectionScrollTarget] = useState<string | null>(null);
   const {
@@ -216,6 +225,7 @@ export const Homepage: React.FC = () => {
   const WINDOW_MIN_POSITIONS: DesktopWindowPositions = {
     browser: { x: 152, y: 20 },
     cwInfo: { x: 230, y: 68 },
+    hacklonega: { x: 184, y: 36 },
   };
   const DESKTOP_WINDOW_EDGE_PADDING = 16;
 
@@ -258,7 +268,7 @@ export const Homepage: React.FC = () => {
   // coordinates, but the system nudges them back into view if the screen
   // becomes too small to fit the old position.
   useLayoutEffect(() => {
-    if (!openWindows.browser && !openWindows.cwInfo) {
+    if (!openWindows.browser && !openWindows.cwInfo && !openWindows.hacklonega) {
       return undefined;
     }
 
@@ -546,17 +556,26 @@ export const Homepage: React.FC = () => {
       id: 'adc-website',
       label: 'ADC Website',
       iconType: 'globe' as const,
-      onDoubleClick: () => launchBrowserWithRoute('home'),
+      onActivate: () => launchBrowserWithRoute('home'),
     },
     {
       id: 'cw-info',
       label: 'Coding Warriors',
       iconType: 'terminal' as const,
-      onDoubleClick: () => launchDesktopWindow('cwInfo'),
+      onActivate: () => launchDesktopWindow('cwInfo'),
     },
-    { id: 'project-1', label: 'Project 1', iconType: 'folder' as const, onDoubleClick: () => launchBrowserWithRoute('projects') },
-    { id: 'project-2', label: 'Project 2', iconType: 'folder' as const, onDoubleClick: () => launchBrowserWithRoute('projects') },
-    { id: 'project-3', label: 'Project 3', iconType: 'folder' as const, onDoubleClick: () => launchBrowserWithRoute('projects') },
+    {
+      id: 'projects',
+      label: 'Projects',
+      iconType: 'folder' as const,
+      onActivate: () => launchBrowserWithRoute('projects'),
+    },
+    {
+      id: 'hacklonega',
+      label: 'Hacklonega',
+      iconType: 'hacklonega' as const,
+      onActivate: () => launchDesktopWindow('hacklonega'),
+    },
   ];
 
   return (
@@ -588,11 +607,24 @@ export const Homepage: React.FC = () => {
         {desktopIcons.map((icon) => (
           <button
             key={icon.id}
+            type="button"
             className="desktop-icon"
-            onDoubleClick={icon.onDoubleClick}
+            onDoubleClick={icon.onActivate}
+            onPointerUp={(event) => {
+              if (event.pointerType === 'touch') icon.onActivate();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                icon.onActivate();
+              }
+            }}
             title={icon.label}
+            aria-label={`Open ${icon.label}`}
           >
-            <div className={`desktop-icon__img desktop-icon__img--${icon.iconType}`} />
+            <div className={`desktop-icon__img desktop-icon__img--${icon.iconType}`}>
+              {icon.iconType === 'hacklonega' && <HacklonegaNgMark />}
+            </div>
             <span className="desktop-icon__label">{icon.label}</span>
           </button>
         ))}
@@ -753,6 +785,61 @@ export const Homepage: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {openWindows.hacklonega && !minimizedWindows.hacklonega && (
+        <div
+          className={`window homepage-window hacklonega-window${maximizedWindows.hacklonega ? ' is-maximized' : ''}`}
+          ref={(element) => {
+            desktopWindowRefs.current.hacklonega = element;
+          }}
+          style={{
+            left: `${windowPositions.hacklonega.x}px`,
+            top: `${windowPositions.hacklonega.y}px`,
+            zIndex: 20 + windowOrder.indexOf('hacklonega'),
+          }}
+          onPointerDown={() => activateWindow('hacklonega')}
+        >
+          <div
+            className="title-bar hacklonega-window-title-bar"
+            onPointerDown={(event) => handleWindowTitleBarPointerDown(event, 'hacklonega')}
+            onPointerMove={handleWindowTitleBarPointerMove}
+            onPointerUp={handleWindowTitleBarPointerUp}
+            onPointerCancel={stopWindowDrag}
+          >
+            <span className="hacklonega-titlebar-icon">
+              <HacklonegaNgMark />
+            </span>
+            <div className="title-bar-text">C:\CODEHAWKS\HACKLONEGA.EXE</div>
+            <div className="title-bar-controls">
+              <button
+                aria-label="Minimize"
+                onClick={() => {
+                  stopWindowDrag();
+                  setWindowMinimized('hacklonega', true);
+                }}
+              ></button>
+              <button
+                aria-label="Maximize"
+                onClick={() => {
+                  stopWindowDrag();
+                  toggleWindowMaximized('hacklonega');
+                }}
+              ></button>
+              <button
+                aria-label="Close"
+                onClick={() => {
+                  stopWindowDrag();
+                  setWindowOpen('hacklonega', false);
+                }}
+              ></button>
+            </div>
+          </div>
+
+          <div className="window-body hacklonega-window-body">
+            <HacklonegaAd />
           </div>
         </div>
       )}
