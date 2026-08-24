@@ -31,7 +31,27 @@ npm run preview    # preview production build
 - After initial bootstrap, changes to that stack use the manual `Update AWS bootstrap` workflow. Frontend and Terraform deployments remain separate, owner-reviewed GitHub environments.
 - Never add AWS access keys to GitHub. Workflows must use short-lived OIDC sessions.
 
-### Deployment Progress (updated August 8, 2026)
+### SES DKIM Cross-Repository Handoff
+
+- The backend repository's Terraform state owns the regional SES identity for `codehawks.org` and outputs three Easy DKIM tokens. This repository's Terraform state owns the Cloudflare zone and is the only place that creates the corresponding DNS records.
+- Store the backend output `ses_dkim_tokens_json` unchanged in the `infrastructure-production` environment variable `SES_DKIM_TOKENS`, then use the manual owner-approved **Plan or apply infrastructure** workflow. The workflow requires exactly three lowercase alphanumeric tokens and publishes unproxied CNAMEs.
+- Never create these CNAMEs manually, never create the SES identity from this repository, and never put Cloudflare credentials in the backend repository. The first-deployment order is backend identity apply, token handoff, frontend/domain apply, SES verification, then the human-owned SES production-access request.
+- Empty `ses_dkim_tokens` remains available only for local validation or the pre-handoff state. The protected production workflow deliberately refuses to apply without all three tokens.
+
+### Local Terraform Tooling (verified August 8, 2026)
+
+- Terraform is installed through Homebrew at `/opt/homebrew/bin/terraform`. The verified local version is `1.15.8` for `darwin_arm64`, which satisfies this repository's `>= 1.10, < 2.0` constraint. The GitHub workflows remain pinned separately to Terraform `1.12.2`.
+- Future agents must run `command -v terraform && terraform version` before reporting that Terraform is unavailable or relying on the recorded version. Update this section and the local security review if the installed version or verification state changes.
+- The last successful local read-only verification ran from `infrastructure/` using `terraform fmt -check -recursive`, `terraform init -backend=false -input=false`, and `terraform validate`. It used the committed lockfile providers: AWS `6.57.1` and Cloudflare `5.22.0`.
+- `terraform init` may require network access to `registry.terraform.io`, even when locked providers are already cached. Local verification must not use AWS credentials, remote state, `terraform apply`, `terraform destroy`, or any other cloud mutation.
+
+### Local-Only Security Review
+
+- `SECURITY.md`, when present in the repository working directory, is the owner's private, local security review. It intentionally contains unresolved vulnerability details and must remain untracked.
+- Never stage, commit, push, publish, upload, or copy `SECURITY.md` or its vulnerability details into a pull request, issue, workflow artifact, build output, public documentation, or other externally accessible location unless the owner explicitly reverses this instruction.
+- Future agents may read and update the local file for authorized security work, but must confirm with `git status --short` that it remains untracked before handoff. Do not add the filename to the tracked `.gitignore`, because doing so would publicly advertise the private review file.
+
+### Deployment Progress (updated August 9, 2026)
 
 - [x] Create/update the `codehawks-bootstrap` CloudFormation stack through the approved bootstrap process.
 - [x] Run the **Import existing Cloudflare DNS** discovery/import workflow so the existing apex and `www` records are represented in Terraform state.
@@ -43,6 +63,8 @@ npm run preview    # preview production build
 - [x] Verify both HTTPS hostnames, the deep `/projects` SPA route, the HTTP-to-HTTPS redirect, and denial of direct anonymous S3 access.
 
 Current live state: the frontend AWS migration is complete. Both `https://codehawks.org` and `https://www.codehawks.org` serve the production application through CloudFront, deep SPA paths resolve to `index.html`, HTTP redirects to HTTPS, and the S3 origin remains private. Future infrastructure and frontend changes must continue through their separate manual, owner-approved GitHub workflows. Do not rerun DNS import unless the Cloudflare records change or Terraform state must adopt a replacement record.
+
+Pending email handoff: after the backend's first SES identity apply, copy its `ses_dkim_tokens_json` output into `SES_DKIM_TOKENS` and approve one frontend infrastructure apply. Do not mark SES/DKIM complete until AWS reports the identity and DKIM status as successful.
 
 ## Architecture
 ```text
