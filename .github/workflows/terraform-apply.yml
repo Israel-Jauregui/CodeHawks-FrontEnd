@@ -1,9 +1,32 @@
-name: Apply infrastructure
+name: Plan or apply infrastructure
+run-name: ${{ inputs.operation }} frontend/domain production at ${{ github.sha }}
 
 on:
   workflow_dispatch:
+    inputs:
+      operation:
+        description: Create a reviewable plan, or apply one previously reviewed exact plan
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply-reviewed-plan
+      plan_run_id:
+        description: Required only for apply; copy the successful plan workflow run ID
+        required: false
+        type: string
+      plan_bundle_sha256:
+        description: Required only for apply; copy the private plan-bundle SHA-256 from its summary
+        required: false
+        type: string
+      planned_commit_sha:
+        description: Required only for apply; copy the 40-character planned commit SHA
+        required: false
+        type: string
 
 permissions:
+  actions: read
   contents: read
   id-token: write
 
@@ -12,41 +35,94 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  apply:
-    name: Apply production infrastructure
+  plan:
+    name: Plan production infrastructure
+    if: ${{ inputs.operation == 'plan' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: infrastructure-production
     defaults:
       run:
+        shell: bash
         working-directory: infrastructure
     env:
+      TF_IN_AUTOMATION: "true"
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+      EMAIL_FORWARDING_DESTINATION: ${{ secrets.EMAIL_FORWARDING_DESTINATION }}
+      EMAIL_FORWARDING_RULE_ENABLED: ${{ vars.EMAIL_FORWARDING_RULE_ENABLED }}
+      EMAIL_ROUTING_DOMAIN: codehawks.org
+      EMAIL_ROUTING_ONBOARDING_ENABLED: ${{ vars.EMAIL_ROUTING_ONBOARDING_ENABLED }}
+      EMAIL_ROUTING_SOURCE_ADDRESS: contact@codehawks.org
+      SES_DKIM_TOKENS: ${{ vars.SES_DKIM_TOKENS }}
+      TF_VAR_api_origin: ${{ vars.API_ORIGIN }}
       TF_VAR_budget_alert_email: ${{ secrets.TF_VAR_BUDGET_ALERT_EMAIL }}
+      TF_VAR_cloudflare_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
+      TF_VAR_email_forwarding_destination: ${{ secrets.EMAIL_FORWARDING_DESTINATION }}
+      TF_VAR_email_forwarding_rule_enabled: ${{ vars.EMAIL_FORWARDING_RULE_ENABLED }}
+      TF_VAR_email_routing_onboarding_enabled: ${{ vars.EMAIL_ROUTING_ONBOARDING_ENABLED }}
       TF_VAR_enable_flat_rate_waf: ${{ vars.ENABLE_FLAT_RATE_WAF }}
+      TF_VAR_media_cdn_origin: ${{ vars.MEDIA_CDN_ORIGIN }}
+      TF_VAR_media_upload_origin: ${{ vars.MEDIA_UPLOAD_ORIGIN }}
       TF_VAR_ses_dkim_tokens: ${{ vars.SES_DKIM_TOKENS }}
 
     steps:
-      - name: Checkout approved revision
+      - name: Check out approved revision
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.sha }}
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           terraform_version: "1.12.2"
 
-      - name: Validate deployment configuration
+      - name: Validate protected deployment configuration
         env:
           AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
         run: |
-          test -n "$AWS_ROLE_ARN"
-          test -n "$TF_STATE_BUCKET"
-          test -n "$CLOUDFLARE_API_TOKEN"
-          test -n "$TF_VAR_budget_alert_email"
-          test -n "$TF_VAR_cloudflare_zone_id"
-          test -n "$TF_VAR_ses_dkim_tokens"
+          set -euo pipefail
+
+          required_values=(
+            AWS_ACCOUNT_ID
+            AWS_ROLE_ARN
+            CLOUDFLARE_ACCOUNT_ID
+            CLOUDFLARE_API_TOKEN
+            CLOUDFLARE_ZONE_ID
+            EMAIL_FORWARDING_DESTINATION
+            EMAIL_FORWARDING_RULE_ENABLED
+            EMAIL_ROUTING_ONBOARDING_ENABLED
+            TF_STATE_BUCKET
+            TF_VAR_api_origin
+            TF_VAR_budget_alert_email
+            TF_VAR_media_cdn_origin
+            TF_VAR_media_upload_origin
+            TF_VAR_ses_dkim_tokens
+          )
+          for name in "${required_values[@]}"; do
+            [[ -n "${!name:-}" ]] || {
+              echo "Missing required infrastructure-production value: ${name}" >&2
+              exit 1
+            }
+          done
+
+          [[ "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]
+          [[ "$AWS_ROLE_ARN" == "arn:aws:iam::${AWS_ACCOUNT_ID}:role/codehawks-infrastructure-apply" ]]
+          [[ "$TF_STATE_BUCKET" == "codehawks-terraform-state-${AWS_ACCOUNT_ID}" ]]
+          [[ "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]]
+          [[ "$CLOUDFLARE_ZONE_ID" =~ ^[0-9a-f]{32}$ ]]
+          [[ "$EMAIL_FORWARDING_DESTINATION" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]]
+          [[ "$EMAIL_FORWARDING_DESTINATION" != *$'\n'* ]]
+          [[ "$EMAIL_FORWARDING_RULE_ENABLED" == "true" || "$EMAIL_FORWARDING_RULE_ENABLED" == "false" ]]
+          [[ "$EMAIL_ROUTING_ONBOARDING_ENABLED" == "true" || "$EMAIL_ROUTING_ONBOARDING_ENABLED" == "false" ]]
+          [[ "$TF_VAR_enable_flat_rate_waf" == "true" || "$TF_VAR_enable_flat_rate_waf" == "false" ]]
+          if [[ "$EMAIL_FORWARDING_RULE_ENABLED" == "true" ]]; then
+            [[ "$EMAIL_ROUTING_ONBOARDING_ENABLED" == "true" ]]
+          fi
           jq -e 'type == "array" and length == 3 and all(.[]; type == "string" and test("^[a-z0-9]+$"))' \
             <<<"$TF_VAR_ses_dkim_tokens" >/dev/null
 
@@ -55,19 +131,311 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: us-east-1
-          role-session-name: codehawks-terraform-${{ github.run_id }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          role-session-name: codehawks-frontend-plan-${{ github.run_id }}
 
-      - name: Initialize remote state
-        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+      - name: Verify infrastructure identity
+        run: |
+          set -euo pipefail
+          actual_account="$(aws sts get-caller-identity --query Account --output text)"
+          caller_arn="$(aws sts get-caller-identity --query Arn --output text)"
+          [[ "$actual_account" == "$AWS_ACCOUNT_ID" ]]
+          [[ "$caller_arn" == "arn:aws:sts::${AWS_ACCOUNT_ID}:assumed-role/codehawks-infrastructure-apply/"* ]]
 
-      - name: Check formatting
-        run: terraform fmt -check -recursive
+      - name: Initialize exact remote state
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=frontend/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
 
-      - name: Plan
-        run: terraform plan -input=false -out=production.tfplan
+      - name: Record Email Routing state ownership
+        run: |
+          set -euo pipefail
+          state_list="$(terraform state list)"
+          state_has() {
+            if grep -Fxq "$1" <<<"$state_list"; then
+              echo true
+            else
+              echo false
+            fi
+          }
+          echo "TF_STATE_HAS_EMAIL_ROUTING_DNS=$(state_has 'cloudflare_email_routing_dns.contact[0]')" >> "$GITHUB_ENV"
+          echo "TF_STATE_HAS_EMAIL_ROUTING_ADDRESS=$(state_has 'cloudflare_email_routing_address.contact[0]')" >> "$GITHUB_ENV"
+          echo "TF_STATE_HAS_EMAIL_ROUTING_RULE=$(state_has 'cloudflare_email_routing_rule.contact[0]')" >> "$GITHUB_ENV"
 
-      - name: Apply
-        run: terraform apply -input=false -auto-approve production.tfplan
+      - name: Run read-only Cloudflare mail preflight
+        run: python3 email-routing/preflight.py
 
-      - name: Publish deployment values
+      - name: Create reviewable exact plan
+        run: |
+          set -euo pipefail
+          terraform fmt -check -recursive
+          terraform validate
+          python3 -m unittest discover -s email-routing -p 'test_*.py'
+          terraform plan -input=false -lock-timeout=5m -out=production.tfplan
+          terraform show -no-color production.tfplan > frontend-plan.txt
+          terraform show -json production.tfplan > production-plan.json
+          python3 email-routing/check_plan.py production-plan.json
+
+          {
+            echo '### Frontend/domain production Terraform plan'
+            echo
+            echo 'This is the exact plan. Do not run the apply operation until every change below is owner-approved.'
+            echo
+            echo '```text'
+            cat frontend-plan.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fingerprint the reviewed protected inputs
+        run: |
+          set -euo pipefail
+          {
+            printf '%s\0' "$AWS_ACCOUNT_ID"
+            printf '%s\0' "$CLOUDFLARE_ACCOUNT_ID"
+            printf '%s\0' "$CLOUDFLARE_ZONE_ID"
+            printf '%s\0' "$EMAIL_FORWARDING_DESTINATION"
+            printf '%s\0' "$EMAIL_FORWARDING_RULE_ENABLED"
+            printf '%s\0' "$EMAIL_ROUTING_ONBOARDING_ENABLED"
+            printf '%s\0' "$TF_VAR_api_origin"
+            printf '%s\0' "$TF_VAR_budget_alert_email"
+            printf '%s\0' "$TF_VAR_enable_flat_rate_waf"
+            printf '%s\0' "$TF_VAR_media_cdn_origin"
+            printf '%s\0' "$TF_VAR_media_upload_origin"
+            printf '%s\0' "$TF_VAR_ses_dkim_tokens"
+          } | sha256sum | awk '{print $1}' > production-config.sha256
+          printf '%s\n' "$GITHUB_SHA" > planned-commit.txt
+
+      - name: Preserve the exact plan privately
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+          readonly bundle=production-plan-bundle.tar.gz
+          readonly plan_key="frontend/plans/${GITHUB_RUN_ID}/${bundle}"
+
+          tar -czf "$bundle" \
+            production.tfplan \
+            frontend-plan.txt \
+            production-config.sha256 \
+            planned-commit.txt
+          bundle_sha256="$(sha256sum "$bundle" | awk '{print $1}')"
+          aws s3 cp "$bundle" "s3://${TF_STATE_BUCKET}/${plan_key}" --only-show-errors
+
+          {
+            echo
+            echo "Plan workflow run ID: \`${GITHUB_RUN_ID}\`"
+            echo "Planned commit SHA: \`${GITHUB_SHA}\`"
+            echo "Private plan bundle SHA-256: \`${bundle_sha256}\`"
+            echo
+            echo 'To apply, start this workflow again with `apply-reviewed-plan` and copy all three values exactly.'
+            echo 'The apply operation downloads and digest-verifies this bundle; it never creates another plan.'
+            echo 'Unapplied bundles expire from the private state bucket after two days.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    name: Apply previously reviewed exact plan
+    if: ${{ inputs.operation == 'apply-reviewed-plan' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: infrastructure-production
+    defaults:
+      run:
+        shell: bash
+        working-directory: infrastructure
+    env:
+      TF_IN_AUTOMATION: "true"
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+      EMAIL_FORWARDING_DESTINATION: ${{ secrets.EMAIL_FORWARDING_DESTINATION }}
+      EMAIL_FORWARDING_RULE_ENABLED: ${{ vars.EMAIL_FORWARDING_RULE_ENABLED }}
+      EMAIL_ROUTING_DOMAIN: codehawks.org
+      EMAIL_ROUTING_ONBOARDING_ENABLED: ${{ vars.EMAIL_ROUTING_ONBOARDING_ENABLED }}
+      EMAIL_ROUTING_SOURCE_ADDRESS: contact@codehawks.org
+      SES_DKIM_TOKENS: ${{ vars.SES_DKIM_TOKENS }}
+      TF_VAR_api_origin: ${{ vars.API_ORIGIN }}
+      TF_VAR_budget_alert_email: ${{ secrets.TF_VAR_BUDGET_ALERT_EMAIL }}
+      TF_VAR_cloudflare_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
+      TF_VAR_email_forwarding_destination: ${{ secrets.EMAIL_FORWARDING_DESTINATION }}
+      TF_VAR_email_forwarding_rule_enabled: ${{ vars.EMAIL_FORWARDING_RULE_ENABLED }}
+      TF_VAR_email_routing_onboarding_enabled: ${{ vars.EMAIL_ROUTING_ONBOARDING_ENABLED }}
+      TF_VAR_enable_flat_rate_waf: ${{ vars.ENABLE_FLAT_RATE_WAF }}
+      TF_VAR_media_cdn_origin: ${{ vars.MEDIA_CDN_ORIGIN }}
+      TF_VAR_media_upload_origin: ${{ vars.MEDIA_UPLOAD_ORIGIN }}
+      TF_VAR_ses_dkim_tokens: ${{ vars.SES_DKIM_TOKENS }}
+
+    steps:
+      - name: Validate exact-plan inputs
+        env:
+          PLAN_BUNDLE_SHA256: ${{ inputs.plan_bundle_sha256 }}
+          PLAN_RUN_ID: ${{ inputs.plan_run_id }}
+          PLANNED_COMMIT_SHA: ${{ inputs.planned_commit_sha }}
+        working-directory: .
+        run: |
+          set -euo pipefail
+          [[ "$PLAN_RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$PLAN_BUNDLE_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$PLANNED_COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Verify the referenced plan run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLAN_RUN_ID: ${{ inputs.plan_run_id }}
+          PLANNED_COMMIT_SHA: ${{ inputs.planned_commit_sha }}
+        working-directory: .
+        run: |
+          set -euo pipefail
+          run_metadata="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PLAN_RUN_ID}")"
+          jq -e \
+            --arg commit "$PLANNED_COMMIT_SHA" \
+            '.conclusion == "success" and .event == "workflow_dispatch" and .head_sha == $commit and .path == ".github/workflows/terraform-apply.yml"' \
+            <<<"$run_metadata" >/dev/null
+
+      - name: Check out the planned revision
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ inputs.planned_commit_sha }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.12.2"
+
+      - name: Validate protected apply target
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+
+          required_values=(
+            AWS_ACCOUNT_ID
+            AWS_ROLE_ARN
+            CLOUDFLARE_ACCOUNT_ID
+            CLOUDFLARE_API_TOKEN
+            CLOUDFLARE_ZONE_ID
+            EMAIL_FORWARDING_DESTINATION
+            EMAIL_FORWARDING_RULE_ENABLED
+            EMAIL_ROUTING_ONBOARDING_ENABLED
+            TF_STATE_BUCKET
+            TF_VAR_api_origin
+            TF_VAR_budget_alert_email
+            TF_VAR_media_cdn_origin
+            TF_VAR_media_upload_origin
+            TF_VAR_ses_dkim_tokens
+          )
+          for name in "${required_values[@]}"; do
+            [[ -n "${!name:-}" ]] || {
+              echo "Missing required infrastructure-production value: ${name}" >&2
+              exit 1
+            }
+          done
+
+          [[ "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]
+          [[ "$AWS_ROLE_ARN" == "arn:aws:iam::${AWS_ACCOUNT_ID}:role/codehawks-infrastructure-apply" ]]
+          [[ "$TF_STATE_BUCKET" == "codehawks-terraform-state-${AWS_ACCOUNT_ID}" ]]
+          [[ "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]]
+          [[ "$CLOUDFLARE_ZONE_ID" =~ ^[0-9a-f]{32}$ ]]
+          [[ "$EMAIL_FORWARDING_DESTINATION" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]]
+          [[ "$EMAIL_FORWARDING_DESTINATION" != *$'\n'* ]]
+          [[ "$EMAIL_FORWARDING_RULE_ENABLED" == "true" || "$EMAIL_FORWARDING_RULE_ENABLED" == "false" ]]
+          [[ "$EMAIL_ROUTING_ONBOARDING_ENABLED" == "true" || "$EMAIL_ROUTING_ONBOARDING_ENABLED" == "false" ]]
+          [[ "$TF_VAR_enable_flat_rate_waf" == "true" || "$TF_VAR_enable_flat_rate_waf" == "false" ]]
+          if [[ "$EMAIL_FORWARDING_RULE_ENABLED" == "true" ]]; then
+            [[ "$EMAIL_ROUTING_ONBOARDING_ENABLED" == "true" ]]
+          fi
+          jq -e 'type == "array" and length == 3 and all(.[]; type == "string" and test("^[a-z0-9]+$"))' \
+            <<<"$TF_VAR_ses_dkim_tokens" >/dev/null
+
+      - name: Get short-lived AWS credentials
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          role-session-name: codehawks-frontend-apply-${{ github.run_id }}
+
+      - name: Verify infrastructure identity
+        run: |
+          set -euo pipefail
+          actual_account="$(aws sts get-caller-identity --query Account --output text)"
+          caller_arn="$(aws sts get-caller-identity --query Arn --output text)"
+          [[ "$actual_account" == "$AWS_ACCOUNT_ID" ]]
+          [[ "$caller_arn" == "arn:aws:sts::${AWS_ACCOUNT_ID}:assumed-role/codehawks-infrastructure-apply/"* ]]
+
+      - name: Initialize the same remote state
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=frontend/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+
+      - name: Record current Email Routing state ownership
+        run: |
+          set -euo pipefail
+          state_list="$(terraform state list)"
+          state_has() {
+            if grep -Fxq "$1" <<<"$state_list"; then
+              echo true
+            else
+              echo false
+            fi
+          }
+          echo "TF_STATE_HAS_EMAIL_ROUTING_DNS=$(state_has 'cloudflare_email_routing_dns.contact[0]')" >> "$GITHUB_ENV"
+          echo "TF_STATE_HAS_EMAIL_ROUTING_ADDRESS=$(state_has 'cloudflare_email_routing_address.contact[0]')" >> "$GITHUB_ENV"
+          echo "TF_STATE_HAS_EMAIL_ROUTING_RULE=$(state_has 'cloudflare_email_routing_rule.contact[0]')" >> "$GITHUB_ENV"
+
+      - name: Re-run read-only Cloudflare mail preflight
+        run: python3 email-routing/preflight.py
+
+      - name: Download and verify the private reviewed plan
+        env:
+          PLAN_BUNDLE_SHA256: ${{ inputs.plan_bundle_sha256 }}
+          PLAN_RUN_ID: ${{ inputs.plan_run_id }}
+          PLANNED_COMMIT_SHA: ${{ inputs.planned_commit_sha }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+          readonly bundle=production-plan-bundle.tar.gz
+          readonly plan_key="frontend/plans/${PLAN_RUN_ID}/${bundle}"
+
+          aws s3 cp "s3://${TF_STATE_BUCKET}/${plan_key}" "$bundle" --only-show-errors
+          printf '%s  %s\n' "$PLAN_BUNDLE_SHA256" "$bundle" | sha256sum --check --strict
+          tar -xzf "$bundle"
+          [[ "$(cat planned-commit.txt)" == "$PLANNED_COMMIT_SHA" ]]
+
+          {
+            printf '%s\0' "$AWS_ACCOUNT_ID"
+            printf '%s\0' "$CLOUDFLARE_ACCOUNT_ID"
+            printf '%s\0' "$CLOUDFLARE_ZONE_ID"
+            printf '%s\0' "$EMAIL_FORWARDING_DESTINATION"
+            printf '%s\0' "$EMAIL_FORWARDING_RULE_ENABLED"
+            printf '%s\0' "$EMAIL_ROUTING_ONBOARDING_ENABLED"
+            printf '%s\0' "$TF_VAR_api_origin"
+            printf '%s\0' "$TF_VAR_budget_alert_email"
+            printf '%s\0' "$TF_VAR_enable_flat_rate_waf"
+            printf '%s\0' "$TF_VAR_media_cdn_origin"
+            printf '%s\0' "$TF_VAR_media_upload_origin"
+            printf '%s\0' "$TF_VAR_ses_dkim_tokens"
+          } | sha256sum | awk '{print $1}' > current-config.sha256
+          [[ "$(cat production-config.sha256)" == "$(cat current-config.sha256)" ]]
+
+      - name: Apply the exact reviewed plan without replanning
+        run: terraform apply -input=false production.tfplan
+
+      - name: Remove the applied private plan bundle
+        env:
+          PLAN_RUN_ID: ${{ inputs.plan_run_id }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+        run: aws s3 rm "s3://${TF_STATE_BUCKET}/frontend/plans/${PLAN_RUN_ID}/production-plan-bundle.tar.gz" --only-show-errors
+
+      - name: Publish non-secret deployment outputs
         run: terraform output

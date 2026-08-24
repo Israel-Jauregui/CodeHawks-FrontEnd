@@ -1,7 +1,21 @@
 cloudflare_zone_id   = "replace-with-cloudflare-zone-id"
+cloudflare_account_id = null
 budget_alert_email   = "officer@example.com"
 monthly_budget_usd   = 25
 enable_flat_rate_waf = false
+
+# Production supplies the destination from the protected GitHub environment;
+# never put a personal mailbox in this reusable example or a committed tfvars.
+email_forwarding_destination      = null
+email_routing_onboarding_enabled = false
+email_forwarding_rule_enabled    = false
+
+# Copy these origin-only values from the backend outputs api_url,
+# media_public_base_url, and media_upload_origin. Do not include a path or
+# trailing slash.
+api_origin          = "https://replace-with-api-id.execute-api.us-east-1.amazonaws.com"
+media_cdn_origin    = "https://replace-with-media-id.cloudfront.net"
+media_upload_origin = "https://replace-with-media-bucket.s3.us-east-1.amazonaws.com"
 
 # Copy the backend Terraform output named ses_dkim_tokens_json after the backend
 # identity apply. Keep this empty only before that first cross-state handoff.

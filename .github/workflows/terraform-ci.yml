@@ -34,10 +34,17 @@ jobs:
       - name: Check formatting
         run: terraform fmt -check -recursive
 
+      - name: Validate CloudFront request routing
+        run: node functions/request-router.test.cjs
+
+      - name: Validate Email Routing safeguards
+        run: python3 -m unittest discover -s email-routing -p 'test_*.py'
+
       - name: Validate CloudFormation bootstrap
         run: |
-          python -m pip install --disable-pip-version-check cfn-lint==1.53.3
+          python3 -m pip install --disable-pip-version-check cfn-lint==1.53.3
           cfn-lint bootstrap/template.yaml
+          python3 bootstrap/check_policy_invariants.py
 
       - name: Initialize without remote state
         run: terraform init -backend=false
