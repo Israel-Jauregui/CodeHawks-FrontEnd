@@ -60,6 +60,10 @@
 
 .title-bar .title-bar-text {
   margin-right: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .title-bar button,
@@ -369,7 +373,7 @@
 
 /* ── Search Box (decorative) ─────────────────────────────────────
  * A compact input + button pair mimicking IE7's integrated search.
- * The input has placeholder text "ADC Search" and is read-only.
+ * The visual input has decorative "CodeHawks Search" text.
  */
 .ie7-search {
   display: flex;
@@ -379,13 +383,24 @@
 }
 
 .ie7-search__input {
+  display: inline-block;
   width: 140px;
+  border: 2px solid;
+  border-color: grey #fff #fff grey;
+  background: #fff;
+  color: #6b6b6b;
   font-size: 11px;
   padding: 2px 4px;
   font-family: "Tahoma", "MS Sans Serif", sans-serif;
 }
 
 .ie7-search__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: silver;
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px grey, inset 2px 2px #dfdfdf;
   font-size: 13px;
   padding: 1px 6px;
   min-width: 0;
@@ -528,5 +543,18 @@
 
   .mobile-menu-toggle {
     display: flex;
+  }
+}
+
+@media (max-width: 420px) {
+  .join-button {
+    max-width: 104px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .title-bar .title-bar-text {
+    max-width: 92px;
   }
 }

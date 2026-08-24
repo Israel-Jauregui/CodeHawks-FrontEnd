@@ -75,9 +75,6 @@ export const localClubDataProvider: ClubDataProvider = {
       name: input.name,
       description: input.description,
       ...(input.repoUrl ? { repoUrl: input.repoUrl } : {}),
-      ...(input.imageFile
-        ? { imageUrl: URL.createObjectURL(input.imageFile) }
-        : input.imageUrl ? { imageUrl: input.imageUrl } : {}),
       ...(input.demoUrl ? { demoUrl: input.demoUrl } : {}),
       techStack: input.techStack,
       status: input.submitForReview ? 'pending_review' : 'draft',
@@ -87,15 +84,20 @@ export const localClubDataProvider: ClubDataProvider = {
     };
     cachedProjects = [project, ...getProjectsStore()];
     writeArray(PROJECTS_STORAGE_KEY, cachedProjects);
-    return simulateLocalFetch({ project, invitationErrors: [] });
+    return simulateLocalFetch({
+      project,
+      invitationErrors: [],
+      ...(input.imageFile
+        ? { imageUploadError: 'Local demo mode does not persist uploaded images. The project was saved with its default image.' }
+        : {}),
+    });
   },
 
   searchMembers: async (query) => {
     const normalizedQuery = query.trim().toLowerCase();
     const results = normalizedQuery
       ? mockMembers.filter((member) =>
-          member.handle.toLowerCase().includes(normalizedQuery)
-          || member.displayName.toLowerCase().includes(normalizedQuery))
+          member.handle.toLowerCase().startsWith(normalizedQuery))
       : [];
     return simulateLocalFetch(results.slice(0, 8));
   },
@@ -103,7 +105,7 @@ export const localClubDataProvider: ClubDataProvider = {
   requestToJoinProject: async (projectId) => {
     const project = getProjectsStore().find((candidate) => candidate.id === projectId);
     if (!project) throw new Error('Project not found.');
-    if (project.memberHandles.includes('local-demo')) {
+    if (project.memberHandles?.includes('local-demo')) {
       return simulateLocalFetch<JoinRequestStatus>('already-member');
     }
     const requests = readJoinRequests(PROJECT_JOIN_REQUESTS_STORAGE_KEY);
@@ -121,7 +123,6 @@ export const localClubDataProvider: ClubDataProvider = {
     const team: Team = {
       id: localId(),
       ...teamInput,
-      ...(imageFile ? { imageUrl: URL.createObjectURL(imageFile) } : {}),
       status: 'open',
       memberCount: 1,
       memberHandles: ['local-demo'],
@@ -130,13 +131,18 @@ export const localClubDataProvider: ClubDataProvider = {
     };
     cachedTeams = [team, ...getTeamsStore()];
     writeArray(TEAMS_STORAGE_KEY, cachedTeams);
-    return simulateLocalFetch({ team });
+    return simulateLocalFetch({
+      team,
+      ...(imageFile
+        ? { imageUploadError: 'Local demo mode does not persist uploaded images. The team was saved with its default image.' }
+        : {}),
+    });
   },
 
   requestToJoinTeam: async (teamId) => {
     const team = getTeamsStore().find((candidate) => candidate.id === teamId);
     if (!team) throw new Error('Team not found.');
-    if (team.memberHandles.includes('local-demo')) {
+    if (team.memberHandles?.includes('local-demo')) {
       return simulateLocalFetch<TeamJoinStatus>('already-member');
     }
     const requests = readJoinRequests(TEAM_JOIN_REQUESTS_STORAGE_KEY);

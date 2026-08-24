@@ -9,6 +9,15 @@ import ProfileModule from './modules/ProfileModule';
 import ProjectsModule from './modules/ProjectsModule';
 import TeamModule from './modules/TeamModule';
 
+const ROUTE_HEADINGS: Record<BrowserRoute, string> = {
+  home: 'CodeHawks at the University of North Georgia',
+  projects: 'CodeHawks projects',
+  team: 'CodeHawks teams',
+  profile: 'Your CodeHawks profile',
+  notifications: 'Your CodeHawks notifications',
+  'event-manager': 'CodeHawks event manager',
+};
+
 interface BrowserContentHostProps {
   route: BrowserRoute;
   sectionScrollTarget: string | null;
@@ -35,7 +44,8 @@ export default function BrowserContentHost({
   };
 
   return (
-    <div className="ie6-content-viewport">
+    <main id="main-content" tabIndex={-1} className="ie6-content-viewport">
+      <h1 className="visually-hidden">{ROUTE_HEADINGS[route]}</h1>
       <BrowserErrorBoundary resetKey={route}>
         {route === 'home' && <HomeModule />}
         {route === 'projects' && <ProjectsModule />}
@@ -44,6 +54,6 @@ export default function BrowserContentHost({
         {route === 'notifications' && <NotificationsModule onOpenResource={openResource} />}
         {route === 'event-manager' && <EventManagerModule />}
       </BrowserErrorBoundary>
-    </div>
+    </main>
   );
 }

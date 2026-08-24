@@ -6,8 +6,8 @@ provider "aws" {
   }
 }
 
-# Authentication is read from CLOUDFLARE_API_TOKEN. The token should be
-# restricted to Zone Read and DNS Edit for codehawks.org.
+# Authentication is read from CLOUDFLARE_API_TOKEN. The protected token uses
+# only the DNS and Email Routing permissions documented in infrastructure/README.md.
 provider "cloudflare" {}
 
 data "aws_caller_identity" "current" {}

@@ -58,13 +58,18 @@ jobs:
 
       - name: Validate deployment configuration
         env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
           S3_BUCKET: ${{ vars.S3_BUCKET }}
           CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
-          test -n "$AWS_ROLE_ARN"
-          test -n "$S3_BUCKET"
-          test -n "$CLOUDFRONT_DISTRIBUTION_ID"
+          set -euo pipefail
+          [[ "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]
+          [[ "$AWS_REGION" == "us-east-1" ]]
+          [[ "$AWS_ROLE_ARN" == "arn:aws:iam::${AWS_ACCOUNT_ID}:role/codehawks-frontend-deploy" ]]
+          [[ "$S3_BUCKET" == "codehawks-frontend-${AWS_ACCOUNT_ID}" ]]
+          [[ "$CLOUDFRONT_DISTRIBUTION_ID" =~ ^[A-Z0-9]{10,20}$ ]]
 
       - name: Get short-lived AWS credentials
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
@@ -72,6 +77,16 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
           role-session-name: codehawks-frontend-${{ github.run_id }}
+
+      - name: Verify frontend deployment identity
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          actual_account="$(aws sts get-caller-identity --query Account --output text)"
+          caller_arn="$(aws sts get-caller-identity --query Arn --output text)"
+          [[ "$actual_account" == "$AWS_ACCOUNT_ID" ]]
+          [[ "$caller_arn" == "arn:aws:sts::${AWS_ACCOUNT_ID}:assumed-role/codehawks-frontend-deploy/"* ]]
 
       - name: Upload versioned assets
         env:

@@ -2,12 +2,16 @@ import type {
   ClubDataProvider,
   ClubEvent,
   CreateProjectInput,
-  MemberSummary,
+  MemberLookupSummary,
   Project,
   Team,
 } from '../types/clubData';
 import { apiRequest, apiRequestPage } from './apiClient';
-import { uploadWithPresignedPost, type PresignedImageUpload } from './mediaUpload';
+import {
+  prepareImageForUpload,
+  uploadWithPresignedPost,
+  type PresignedImageUpload,
+} from './mediaUpload';
 
 const CACHE_DURATION_MS = 30_000;
 const cache = new Map<string, { expiresAt: number; value: unknown[] }>();
@@ -44,19 +48,20 @@ async function uploadResourceImage<T extends Project | Team>(
   file: File,
 ): Promise<T> {
   const resourcePath = resourceType === 'project' ? 'projects' : 'teams';
+  const prepared = await prepareImageForUpload(file);
   const upload = await apiRequest<PresignedImageUpload>(
     `/v1/${resourcePath}/${encodeURIComponent(resource.id)}/image-upload`,
     {
       method: 'POST',
       auth: true,
-      body: { contentType: file.type, fileSize: file.size },
+      body: { contentType: prepared.file.type, fileSize: prepared.file.size },
     },
   );
-  await uploadWithPresignedPost(upload, file);
-  return apiRequest<T>(`/v1/${resourcePath}/${encodeURIComponent(resource.id)}`, {
-    method: 'PATCH',
+  await uploadWithPresignedPost(upload, prepared.file);
+  return apiRequest<T>(`/v1/${resourcePath}/${encodeURIComponent(resource.id)}/image-upload/finalize`, {
+    method: 'POST',
     auth: true,
-    body: { imageUrl: upload.publicUrl },
+    body: { uploadId: upload.uploadId },
   });
 }
 
@@ -106,7 +111,7 @@ export const apiClubDataProvider: ClubDataProvider = {
 
   searchMembers: async (query: string) => {
     const path = `/v1/members?search=${encodeURIComponent(query.trim())}&limit=8`;
-    return (await apiRequestPage<MemberSummary>(path, { auth: true })).data;
+    return (await apiRequestPage<MemberLookupSummary>(path, { auth: true })).data;
   },
 
   requestToJoinProject: async (projectId: string) => {

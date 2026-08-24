@@ -13,7 +13,6 @@
 
 body {
   margin: 0;
-  min-width: 320px;
   min-height: 100vh;
 
   /*
@@ -43,4 +42,50 @@ a {
 
 a:hover {
   color: #0033a0;
+}
+
+/* Keyboard focus must stay obvious even when xp.css removes native outlines. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #ffbf00 !important;
+  outline-offset: 2px !important;
+}
+
+.skip-link {
+  position: fixed;
+  top: 6px;
+  left: 6px;
+  z-index: 20000;
+  padding: 8px 12px;
+  border: 2px solid #003399;
+  background: #fff;
+  color: #003399;
+  font: bold 13px Tahoma, "MS Sans Serif", sans-serif;
+  transform: translateY(-160%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

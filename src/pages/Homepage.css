@@ -19,7 +19,7 @@
 
 .events-splash-animate:hover {
   transform: scale(1.16);
-  color: #d78500;
+  color: #754000;
   text-shadow: 0 1px 0 #fff, 0 0 6px #fff3a1, 0 2px 8px #316ac544;
 }
 
@@ -1067,9 +1067,20 @@
 }
 
 .cta-button {
+  display: inline-block;
   padding: 4px 24px;
+  border: 0;
+  background: silver;
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px grey, inset 2px 2px #dfdfdf;
+  color: #000;
   font-size: 12px;
   font-weight: bold;
+  line-height: 1.6;
+  text-decoration: none;
+}
+
+.cta-button:active {
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────── */
@@ -1115,6 +1126,85 @@
 
   .xp-desktop {
     padding-bottom: calc(var(--xp-taskbar-height) + 6px);
+  }
+}
+
+@media (max-width: 520px) {
+  .xp-desktop {
+    --xp-taskbar-height: 72px;
+    padding-inline: 5px;
+  }
+
+  .desktop-icons {
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .desktop-icon {
+    width: 100%;
+    padding-inline: 1px;
+  }
+
+  .homepage-body section,
+  .hero-section {
+    padding: 12px 8px !important;
+  }
+
+  .events-list,
+  .features-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .event-card,
+  .project-card {
+    padding-inline: 10px;
+  }
+
+  .ie6-status-bar .status-bar__info,
+  .ie6-status-bar .status-bar__zone {
+    display: none;
+  }
+
+  .xp-taskbar {
+    height: var(--xp-taskbar-height);
+    align-content: center;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 3px 5px;
+  }
+
+  .xp-taskbar__start {
+    width: 42px;
+    min-width: 42px;
+    height: 28px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .xp-taskbar__start-text {
+    display: none;
+  }
+
+  .xp-taskbar__windows {
+    flex: 1 1 90px;
+  }
+
+  .xp-taskbar__window-button {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    padding-inline: 6px;
+  }
+
+  .xp-taskbar__clock {
+    min-width: 62px;
+    height: 28px;
+    padding-inline: 5px;
+  }
+
+  .xp-taskbar__clock > :not(.xp-taskbar__time) {
+    display: none;
   }
 }
 
@@ -1271,6 +1361,7 @@ body.xp-window-dragging {
   font-family: "Tahoma", "MS Sans Serif", sans-serif;
   font-size: 12px;
   font-weight: bold;
+  text-decoration: none;
 }
 
 .xp-start-menu__item:hover,
@@ -1500,5 +1591,53 @@ body.xp-window-dragging {
 
   .xp-taskbar__time {
     font-size: 10px;
+  }
+}
+
+/* Keep the XP metaphor usable without horizontal scrolling at 320 CSS px. */
+@media (max-width: 520px) {
+  .xp-desktop {
+    --xp-taskbar-height: 72px;
+  }
+
+  .xp-taskbar {
+    height: var(--xp-taskbar-height);
+    align-content: center;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 3px 5px;
+  }
+
+  .xp-taskbar__start {
+    width: 42px;
+    min-width: 42px;
+    height: 28px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .xp-taskbar__start-text {
+    display: none;
+  }
+
+  .xp-taskbar__windows {
+    flex: 1 1 90px;
+  }
+
+  .xp-taskbar__window-button {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    padding-inline: 6px;
+  }
+
+  .xp-taskbar__clock {
+    min-width: 62px;
+    height: 28px;
+    padding-inline: 5px;
+  }
+
+  .xp-taskbar__clock > :not(.xp-taskbar__time) {
+    display: none;
   }
 }

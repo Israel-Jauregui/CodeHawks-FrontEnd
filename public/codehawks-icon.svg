@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="codehawks-icon-title">
+  <title id="codehawks-icon-title">CodeHawks</title>
+  <defs>
+    <linearGradient id="codehawksBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7ec8ff"/>
+      <stop offset="58%" stop-color="#316ac5"/>
+      <stop offset="100%" stop-color="#003399"/>
+    </linearGradient>
+    <linearGradient id="codehawksSilver" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#aca899"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#316ac5"/>
+  <rect x="18" y="18" width="476" height="476" rx="98" fill="url(#codehawksSilver)"/>
+  <rect x="48" y="48" width="416" height="416" rx="82" fill="url(#codehawksBlue)"/>
+  <path d="M147 171c-49 0-84 36-84 86s35 84 84 84c28 0 52-10 69-29l-30-29c-10 11-23 17-39 17-24 0-41-18-41-43 0-27 17-45 41-45 16 0 29 6 39 17l30-29c-17-19-41-29-69-29Z" fill="#fff" stroke="#003399" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M235 176v160h43v-62h61v62h43V176h-43v58h-61v-58Z" fill="#fff" stroke="#003399" stroke-width="8" stroke-linejoin="round"/>
+</svg>

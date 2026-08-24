@@ -32,15 +32,6 @@ export default function ProjectCard({
           </div>
         )}
 
-        <div className="project-card__meta-row">
-          <span className="project-card__meta-label">Team Members</span>
-          <div className="project-card__members" aria-label={`Team members for ${project.name}`}>
-            {project.memberHandles.length > 0 ? project.memberHandles.map((handle) => (
-              <span key={handle} className="project-card__member-pill">@{handle}</span>
-            )) : <span>Recruiting now</span>}
-          </div>
-        </div>
-
         <div className="project-card__actions">
           {project.repoUrl ? (
             <a

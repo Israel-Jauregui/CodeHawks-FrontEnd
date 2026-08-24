@@ -14,8 +14,8 @@
 }
 
 .xp-login-modal {
-  min-width: 340px;
-  max-width: 96vw;
+  width: min(520px, calc(100vw - 20px));
+  min-width: 0;
   box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), 0 1.5px 0 #fff inset;
   border-radius: 6px;
   overflow: hidden;
@@ -44,6 +44,19 @@
 .login-form p {
   margin: 0 0 12px;
   line-height: 1.45;
+}
+
+.login-privacy-notice {
+  padding: 9px 10px;
+  border: 1px solid #7f9db9;
+  border-left: 5px solid #316ac5;
+  background: #fff;
+  color: #1f1f1f;
+  font-size: 12px;
+}
+
+.login-privacy-notice p:last-child {
+  margin-bottom: 0;
 }
 
 .login-microsoft-icon {
@@ -88,6 +101,7 @@
 }
 .login-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.7rem;
   margin-top: 0.5rem;
 }

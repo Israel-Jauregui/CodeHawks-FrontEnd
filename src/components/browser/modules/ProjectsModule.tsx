@@ -1,9 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
 import { useProjectsData } from '../../../hooks/useProjectsData';
 import { isUsingLocalData } from '../../../services/clubDataProvider';
 import { validateImageFile } from '../../../services/mediaUpload';
-import type { CreateProjectInput, MemberSummary } from '../../../types/clubData';
+import type { CreateProjectInput, MemberLookupSummary } from '../../../types/clubData';
 import ProjectCard from '../../ProjectCard';
 import ResourceImagePicker from '../../ResourceImagePicker';
 import './ProjectsModule.css';
@@ -12,7 +12,6 @@ interface ProjectFormValues {
   name: string;
   description: string;
   repoUrl: string;
-  imageUrl: string;
   demoUrl: string;
   techStack: string;
   submitForReview: boolean;
@@ -22,7 +21,6 @@ const EMPTY_FORM_VALUES: ProjectFormValues = {
   name: '',
   description: '',
   repoUrl: '',
-  imageUrl: '',
   demoUrl: '',
   techStack: '',
   submitForReview: true,
@@ -61,8 +59,9 @@ export default function ProjectsModule() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formValues, setFormValues] = useState<ProjectFormValues>(EMPTY_FORM_VALUES);
   const [memberLookupQuery, setMemberLookupQuery] = useState('');
-  const [memberLookupResults, setMemberLookupResults] = useState<MemberSummary[]>([]);
-  const [invitedMembers, setInvitedMembers] = useState<MemberSummary[]>([]);
+  const [memberLookupResults, setMemberLookupResults] = useState<MemberLookupSummary[]>([]);
+  const [isMemberLookupPending, setIsMemberLookupPending] = useState(false);
+  const [invitedMembers, setInvitedMembers] = useState<MemberLookupSummary[]>([]);
   const [imageFile, setImageFile] = useState<File | undefined>();
   const [formError, setFormError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -78,7 +77,6 @@ export default function ProjectsModule() {
     if (!formValues.name.trim()) return 'Project name is required.';
     if (!formValues.description.trim()) return 'Project description is required.';
     if (!isValidHttpsUrl(formValues.repoUrl)) return 'Repository link must be a valid HTTPS URL.';
-    if (!isValidHttpsUrl(formValues.imageUrl)) return 'Image URL must be a valid HTTPS URL.';
     if (!isValidHttpsUrl(formValues.demoUrl)) return 'Demo URL must be a valid HTTPS URL.';
     const imageError = validateImageFile(imageFile);
     if (imageError) return imageError;
@@ -90,21 +88,30 @@ export default function ProjectsModule() {
     return memberLookupResults.filter((member) => !invitedIds.has(member.id));
   }, [invitedMembers, memberLookupResults]);
 
-  const handleMemberLookup: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
-    const nextQuery = event.target.value;
+  useEffect(() => {
+    const nextQuery = memberLookupQuery.trim();
     const requestId = ++lookupRequestId.current;
-    setMemberLookupQuery(nextQuery);
-    if (!nextQuery.trim()) {
+    if (nextQuery.length < 3) {
       setMemberLookupResults([]);
-      return;
+      setIsMemberLookupPending(false);
+      return undefined;
     }
-    try {
-      const results = await searchMembers(nextQuery);
-      if (requestId === lookupRequestId.current) setMemberLookupResults(results);
-    } catch {
-      if (requestId === lookupRequestId.current) setMemberLookupResults([]);
-    }
-  };
+
+    setIsMemberLookupPending(true);
+    const timer = window.setTimeout(() => {
+      void searchMembers(nextQuery)
+        .then((results) => {
+          if (requestId === lookupRequestId.current) setMemberLookupResults(results);
+        })
+        .catch(() => {
+          if (requestId === lookupRequestId.current) setMemberLookupResults([]);
+        })
+        .finally(() => {
+          if (requestId === lookupRequestId.current) setIsMemberLookupPending(false);
+        });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [memberLookupQuery, searchMembers]);
 
   const handleRequestToJoin = async (projectId: string) => {
     if (!canUseMemberFeatures) {
@@ -139,7 +146,6 @@ export default function ProjectsModule() {
       name: formValues.name.trim(),
       description: formValues.description.trim(),
       repoUrl: optionalValue(formValues.repoUrl),
-      imageUrl: optionalValue(formValues.imageUrl),
       demoUrl: optionalValue(formValues.demoUrl),
       techStack: formValues.techStack.split(',').map((item) => item.trim()).filter(Boolean),
       submitForReview: formValues.submitForReview,
@@ -198,9 +204,9 @@ export default function ProjectsModule() {
         </fieldset>
       )}
 
-      {saveMessage && <fieldset className="projects-module__feedback projects-module__feedback--success"><legend>Saved</legend><p>{saveMessage}</p></fieldset>}
-      {(formError || saveError) && <fieldset className="projects-module__feedback projects-module__feedback--error"><legend>Validation</legend><p>{formError || saveError}</p></fieldset>}
-      {joinError && <fieldset className="projects-module__feedback projects-module__feedback--error"><legend>Join Requests</legend><p>{joinError}</p></fieldset>}
+      {saveMessage && <fieldset className="projects-module__feedback projects-module__feedback--success" role="status" aria-live="polite"><legend>Saved</legend><p>{saveMessage}</p></fieldset>}
+      {(formError || saveError) && <fieldset className="projects-module__feedback projects-module__feedback--error" role="alert"><legend>Validation</legend><p>{formError || saveError}</p></fieldset>}
+      {joinError && <fieldset className="projects-module__feedback projects-module__feedback--error" role="alert"><legend>Join Requests</legend><p>{joinError}</p></fieldset>}
 
       {isCreateOpen && canUseMemberFeatures && (
         <fieldset className="projects-module__form-wrapper">
@@ -230,30 +236,27 @@ export default function ProjectsModule() {
             <div className="projects-module__field projects-module__field--full-width">
               <ResourceImagePicker
                 file={imageFile}
-                imageUrl={formValues.imageUrl}
                 onFileChange={setImageFile}
-                onImageUrlChange={(imageUrl) => handleFormFieldChange('imageUrl', imageUrl)}
               />
             </div>
 
-            <label className="projects-module__field projects-module__field--full-width">
+            <div className="projects-module__field projects-module__field--full-width" role="search">
               <span>Invite Members (optional)</span>
-              <input value={memberLookupQuery} onChange={handleMemberLookup} placeholder="Search by handle" />
-              {isSearchingMembers && <p className="projects-module__lookup-hint">Searching members...</p>}
-              {!isSearchingMembers && memberLookupQuery.trim() && lookupCandidates.length === 0 && <p className="projects-module__lookup-hint">No members found.</p>}
+              <label className="visually-hidden" htmlFor="project-member-search">Search eligible members by handle</label>
+              <input id="project-member-search" type="search" value={memberLookupQuery} onChange={(event) => setMemberLookupQuery(event.target.value)} placeholder="Enter at least 3 handle characters" aria-describedby="project-member-search-status" />
+              <p id="project-member-search-status" className="projects-module__lookup-hint" role="status" aria-live="polite">
+                {isMemberLookupPending || isSearchingMembers ? 'Searching members...' : memberLookupQuery.trim().length > 0 && memberLookupQuery.trim().length < 3 ? `Enter ${3 - memberLookupQuery.trim().length} more ${3 - memberLookupQuery.trim().length === 1 ? 'character' : 'characters'} to search.` : memberLookupQuery.trim().length >= 3 && lookupCandidates.length === 0 ? 'No members found.' : ''}
+              </p>
               {lookupCandidates.length > 0 && (
-                <div className="projects-module__lookup-results" role="listbox" aria-label="Member lookup results">
+                <ul className="projects-module__lookup-results" aria-label="Member search results">
                   {lookupCandidates.map((member) => (
-                    <button key={member.id} type="button" className="projects-module__lookup-item" onClick={() => {
-                      setInvitedMembers((current) => [...current, member]);
-                      setMemberLookupQuery('');
-                      setMemberLookupResults([]);
-                    }}>
-                      <span>{member.displayName}</span>
-                      <span className="projects-module__lookup-username">@{member.handle}</span>
-                    </button>
+                    <li key={member.id}><button type="button" className="projects-module__lookup-item" onClick={() => {
+                        setInvitedMembers((current) => [...current, member]);
+                        setMemberLookupQuery('');
+                        setMemberLookupResults([]);
+                      }}><span>{member.displayName}</span><span className="projects-module__lookup-username">@{member.handle}</span></button></li>
                   ))}
-                </div>
+                </ul>
               )}
               {invitedMembers.length > 0 && (
                 <div className="projects-module__invite-list" aria-label="Invited members">
@@ -264,12 +267,12 @@ export default function ProjectsModule() {
                   ))}
                 </div>
               )}
-            </label>
+            </div>
 
-            <label className="projects-module__field projects-module__field--checkbox">
-              <input type="checkbox" checked={formValues.submitForReview} onChange={(event) => handleFormFieldChange('submitForReview', event.target.checked)} />
-              <span>Submit for officer review</span>
-            </label>
+            <div className="projects-module__field projects-module__field--checkbox">
+              <input id="project-submit-review" type="checkbox" checked={formValues.submitForReview} onChange={(event) => handleFormFieldChange('submitForReview', event.target.checked)} />
+              <label htmlFor="project-submit-review">Submit for officer review</label>
+            </div>
             <div className="projects-module__actions">
               <button type="submit" className="projects-module__button" disabled={isSaving}>{isSaving ? 'Saving...' : 'Create Project'}</button>
             </div>
@@ -285,7 +288,7 @@ export default function ProjectsModule() {
           {projects.map((project) => (
             <div key={project.id} className="projects-module__card-wrapper">
               <ProjectCard project={project} onRequestJoin={() => void handleRequestToJoin(project.id)} isRequestJoinDisabled={isRequestingJoin} />
-              {joinMessageByProject[project.id] && <p className="projects-module__join-message">{joinMessageByProject[project.id]}</p>}
+              {joinMessageByProject[project.id] && <p className="projects-module__join-message" role="status">{joinMessageByProject[project.id]}</p>}
             </div>
           ))}
         </div>

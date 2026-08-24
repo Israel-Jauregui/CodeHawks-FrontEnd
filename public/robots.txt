@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /profile
+Disallow: /notifications
+Disallow: /manage/
+
+Sitemap: https://codehawks.org/sitemap.xml

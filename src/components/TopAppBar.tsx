@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { canManageEvents } from '../auth/permissions';
+import { SITE_IDENTITY } from '../constants/site';
 import type { BrowserRoute } from './browser/hooks/useBrowserNavigation';
 import './TopAppBar.css';
 
@@ -36,7 +37,7 @@ import './TopAppBar.css';
  *   ├──────────────────────────────────────────────────────────────────────┤
  *   │ [◄ Back▾][►] [✕][↻][⌂][⌕][☆][⧖] │ Home About Events ... Contact  │
  *   ├──────────────────────────────────────────────────────────────────────┤
- *   │ Address [http://www.codehawks.org] [ADC Search ⌕] Git Dis UNG [P][T]│
+ *   │ Address [https://codehawks.org] [CodeHawks Search ⌕] Git Dis UNG [P][T]│
  *   └──────────────────────────────────────────────────────────────────────┘
  *
  * CONSOLIDATION (IE6 → IE7):
@@ -86,7 +87,7 @@ interface TopAppBarProps {
 }
 
 export const TopAppBar: React.FC<TopAppBarProps> = ({
-  title = 'University of North Georgia',
+  title = `${SITE_IDENTITY.publicName} at ${SITE_IDENTITY.universityName}`,
   onClose,
   onMinimize,
   onMaximize,
@@ -102,7 +103,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   onForward,
   canGoBack = false,
   canGoForward = false,
-  currentAddress = 'http://www.codehawks.org/home',
+  currentAddress = 'https://codehawks.org/',
 }) => {
   const { user, isLoading: isAuthLoading, logout, unreadCount } = useAuth();
   // Dropdown state for user menu
@@ -129,6 +130,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
     { key: 'events', label: 'Events', onClick: () => onNavigateSection?.('events') },
     { key: 'projects', label: 'Projects', onClick: () => onNavigateRoute?.('projects') },
     { key: 'team', label: 'Team', onClick: () => onNavigateRoute?.('team') },
+    { key: 'members', label: 'Members', onClick: () => window.location.assign('/members') },
     { key: 'contact', label: 'Contact', onClick: () => onNavigateSection?.('contact') },
   ];
 
@@ -291,24 +293,12 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
          * original 16×16 icon sprites.
          */}
         <div className="ie7-nav-small-group">
-          <button className="ie7-nav-small-btn" title="Stop" aria-label="Stop">
-            {'\u00D7'}
-          </button>
-          <button className="ie7-nav-small-btn" title="Refresh" aria-label="Refresh">
-            {'\u21BB'}
-          </button>
-          <button className="ie7-nav-small-btn" title="Home" aria-label="Home">
-            {'\u2302'}
-          </button>
-          <button className="ie7-nav-small-btn" title="Search" aria-label="Search">
-            {'\u2315'}
-          </button>
-          <button className="ie7-nav-small-btn" title="Favorites" aria-label="Favorites">
-            {'\u2606'}
-          </button>
-          <button className="ie7-nav-small-btn" title="History" aria-label="History">
-            {'\u29D6'}
-          </button>
+          <span className="ie7-nav-small-btn" aria-hidden="true">{'\u00D7'}</span>
+          <span className="ie7-nav-small-btn" aria-hidden="true">{'\u21BB'}</span>
+          <span className="ie7-nav-small-btn" aria-hidden="true">{'\u2302'}</span>
+          <span className="ie7-nav-small-btn" aria-hidden="true">{'\u2315'}</span>
+          <span className="ie7-nav-small-btn" aria-hidden="true">{'\u2606'}</span>
+          <span className="ie7-nav-small-btn" aria-hidden="true">{'\u29D6'}</span>
         </div>
 
         {/* ── Separator ───────────────────────────────────────────
@@ -342,8 +332,8 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
        * onto a single row.
        *
        * LAYOUT WITHIN THIS ROW:
-       *   Address [http://www.codehawks.org          ]
-       *   [ADC Search ⌕]
+       *   Address [https://codehawks.org             ]
+       *   [CodeHawks Search ⌕]
        *   GitHub  Discord  UNG  — real external links (always visible)
        *   [Page ▾] [Tools ▾]   — decorative dropdown buttons
        *
@@ -354,8 +344,9 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
        */}
       <div className="ie7-address-row">
         {/* ── Address section ─────────────────────────────────── */}
-        <span className="ie7-address-row__label">Address</span>
+        <label className="ie7-address-row__label" htmlFor="codehawks-current-address">Address</label>
         <input
+          id="codehawks-current-address"
           type="text"
           className="ie7-address-row__input"
           value={currentAddress}
@@ -363,20 +354,9 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
         />
 
         {/* ── Search section (decorative) ─────────────────────── */}
-        <div className="ie7-search">
-          <input
-            type="text"
-            className="ie7-search__input"
-            placeholder="ADC Search"
-            readOnly
-          />
-          <button
-            className="ie7-search__btn"
-            title="Search"
-            aria-label="Search"
-          >
-            {'\u2315'}
-          </button>
+        <div className="ie7-search" aria-hidden="true">
+          <span className="ie7-search__input">CodeHawks Search</span>
+          <span className="ie7-search__btn">{'\u2315'}</span>
         </div>
 
         {/* ── Utility cluster ─────────────────────────────────────
@@ -400,12 +380,8 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             </React.Fragment>
           ))}
           <span className="ie7-utility-divider">|</span>
-          <button className="ie7-utility-btn" aria-label="Page menu">
-            Page {'\u25BE'}
-          </button>
-          <button className="ie7-utility-btn" aria-label="Tools menu">
-            Tools {'\u25BE'}
-          </button>
+          <span className="ie7-utility-btn" aria-hidden="true">Page {'\u25BE'}</span>
+          <span className="ie7-utility-btn" aria-hidden="true">Tools {'\u25BE'}</span>
         </div>
       </div>
 

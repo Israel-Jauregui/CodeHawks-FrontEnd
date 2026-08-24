@@ -16,15 +16,6 @@ const EMPTY_FORM: CreateTeamInput = {
   maxMembers: 6,
 };
 
-function isHttpsOrEmpty(value: string | undefined): boolean {
-  if (!value?.trim()) return true;
-  try {
-    return new URL(value).protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
 export default function TeamModule() {
   const { isAuthenticated } = useAuth();
   const canUseMemberFeatures = isUsingLocalData || isAuthenticated;
@@ -40,8 +31,8 @@ export default function TeamModule() {
     setMessage(null);
     setFormError(null);
     const imageError = validateImageFile(form.imageFile);
-    if (imageError || !isHttpsOrEmpty(form.imageUrl)) {
-      setFormError(imageError ?? 'Image URL must be a valid HTTPS URL.');
+    if (imageError) {
+      setFormError(imageError);
       return;
     }
     const result = await createTeam({ ...form, name: form.name.trim(), description: form.description.trim() });
@@ -80,8 +71,8 @@ export default function TeamModule() {
       </div>
 
       {!canUseMemberFeatures && <fieldset className="team-module__feedback"><legend>Member Tools</legend><p>Sign in to create or join a team.</p></fieldset>}
-      {message && <fieldset className="team-module__feedback team-module__feedback--success"><legend>Saved</legend><p>{message}</p></fieldset>}
-      {(formError || saveError || joinError) && <fieldset className="team-module__feedback team-module__feedback--error"><legend>Action Failed</legend><p>{formError || saveError || joinError}</p></fieldset>}
+      {message && <fieldset className="team-module__feedback team-module__feedback--success" role="status" aria-live="polite"><legend>Saved</legend><p>{message}</p></fieldset>}
+      {(formError || saveError || joinError) && <fieldset className="team-module__feedback team-module__feedback--error" role="alert"><legend>Action Failed</legend><p>{formError || saveError || joinError}</p></fieldset>}
 
       {isCreateOpen && canUseMemberFeatures && (
         <fieldset className="team-module__form-wrapper">
@@ -99,9 +90,7 @@ export default function TeamModule() {
             <div className="team-module__full">
               <ResourceImagePicker
                 file={form.imageFile}
-                imageUrl={form.imageUrl ?? ''}
                 onFileChange={(imageFile) => setForm((current) => ({ ...current, imageFile }))}
-                onImageUrlChange={(imageUrl) => setForm((current) => ({ ...current, imageUrl: imageUrl || undefined }))}
               />
             </div>
             <div className="team-module__actions"><button type="submit" disabled={isSaving}>{isSaving ? 'Creating...' : 'Create Team'}</button></div>
@@ -117,7 +106,7 @@ export default function TeamModule() {
           {teams.map((team) => (
             <div key={team.id}>
               <TeamCard team={team} onJoin={() => void handleJoin(team.id)} isJoining={isJoining} />
-              {joinMessages[team.id] && <p className="team-module__join-message">{joinMessages[team.id]}</p>}
+              {joinMessages[team.id] && <p className="team-module__join-message" role="status">{joinMessages[team.id]}</p>}
             </div>
           ))}
         </div>

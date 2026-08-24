@@ -129,11 +129,18 @@
 }
 
 .projects-module__lookup-results {
+  padding: 0;
+  margin: 0;
   border: 1px solid #7f9db9;
   border-radius: 3px;
   background: #fff;
   max-height: 150px;
   overflow: auto;
+  list-style: none;
+}
+
+.projects-module__lookup-results li {
+  margin: 0;
 }
 
 .projects-module__lookup-item {
@@ -214,5 +221,9 @@
 
   .projects-module__list {
     grid-template-columns: 1fr;
+  }
+
+  .projects-module__form {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
