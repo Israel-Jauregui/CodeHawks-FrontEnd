@@ -25,6 +25,7 @@ configure_environment() {
 gh repo view "$full_name" >/dev/null
 configure_environment frontend-production
 configure_environment infrastructure-production
+configure_environment bootstrap-production
 
 jq -n \
   '{required_status_checks: {strict: true, contexts: ["Build and lint", "Terraform checks"]}, enforce_admins: true, required_pull_request_reviews: {dismiss_stale_reviews: true, require_code_owner_reviews: false, required_approving_review_count: 0}, restrictions: null, required_linear_history: true, allow_force_pushes: false, allow_deletions: false, required_conversation_resolution: true, lock_branch: false, allow_fork_syncing: true}' \
@@ -34,4 +35,4 @@ gh api --method PUT "repos/${full_name}/actions/permissions/workflow" \
   -f default_workflow_permissions=read \
   -F can_approve_pull_request_reviews=false >/dev/null
 
-echo "Configured ${full_name}: protected main, isolated owner-approved environments, read-only workflow tokens."
+echo "Configured ${full_name}: protected main, three isolated owner-approved environments, read-only workflow tokens."

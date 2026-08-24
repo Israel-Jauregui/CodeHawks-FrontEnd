@@ -2,6 +2,11 @@ name: Update AWS bootstrap
 
 on:
   workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type update-codehawks-bootstrap to confirm this owner-admin action
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -16,7 +21,7 @@ jobs:
     name: Update bootstrap stack
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: infrastructure-production
+    environment: bootstrap-production
 
     steps:
       - name: Checkout approved revision
@@ -24,18 +29,34 @@ jobs:
 
       - name: Validate configuration
         env:
-          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
-        run: test -n "$AWS_ROLE_ARN"
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_BOOTSTRAP_ROLE_ARN: ${{ vars.AWS_BOOTSTRAP_ROLE_ARN }}
+          AWS_BOOTSTRAP_SERVICE_ROLE_ARN: ${{ vars.AWS_BOOTSTRAP_SERVICE_ROLE_ARN }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$CONFIRMATION" == "update-codehawks-bootstrap" ]]
+          [[ "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]
+          [[ "$AWS_BOOTSTRAP_ROLE_ARN" == "arn:aws:iam::${AWS_ACCOUNT_ID}:role/codehawks-bootstrap-update" ]]
+          [[ "$AWS_BOOTSTRAP_SERVICE_ROLE_ARN" == "arn:aws:iam::${AWS_ACCOUNT_ID}:role/codehawks-bootstrap-cloudformation" ]]
+
+      - name: Validate bootstrap policy invariants
+        run: |
+          python -m pip install --disable-pip-version-check cfn-lint==1.53.3
+          cfn-lint infrastructure/bootstrap/template.yaml
+          python infrastructure/bootstrap/check_policy_invariants.py
 
       - name: Get short-lived AWS credentials
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ vars.AWS_BOOTSTRAP_ROLE_ARN }}
           aws-region: us-east-1
           role-session-name: codehawks-bootstrap-${{ github.run_id }}
 
       - name: Update versioned bootstrap stack
         shell: bash
+        env:
+          AWS_BOOTSTRAP_SERVICE_ROLE_ARN: ${{ vars.AWS_BOOTSTRAP_SERVICE_ROLE_ARN }}
         run: |
           set -euo pipefail
 
@@ -46,6 +67,7 @@ jobs:
             aws cloudformation update-stack \
               --template-body file://infrastructure/bootstrap/template.yaml \
               --stack-name codehawks-bootstrap \
+              --role-arn "$AWS_BOOTSTRAP_SERVICE_ROLE_ARN" \
               --capabilities CAPABILITY_NAMED_IAM \
               2>&1
           )"
@@ -66,30 +88,58 @@ jobs:
           aws cloudformation wait stack-update-complete \
             --stack-name codehawks-bootstrap
 
-      - name: Verify deployed OIDC provider permissions
+      - name: Verify deployed bootstrap separation
         shell: bash
+        env:
+          EXPECTED_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
         run: |
           set -euo pipefail
 
-          readonly expected_account="394270749442"
           readonly role_name="codehawks-infrastructure-apply"
           readonly policy_name="ManageCodeHawksInfrastructure"
+          readonly boundary_arn="arn:aws:iam::${EXPECTED_ACCOUNT}:policy/codehawks-infrastructure-boundary"
+          readonly routine_role_arn="arn:aws:iam::${EXPECTED_ACCOUNT}:role/${role_name}"
+          readonly frontend_role_arn="arn:aws:iam::${EXPECTED_ACCOUNT}:role/codehawks-frontend-deploy"
+          readonly stack_arn="arn:aws:cloudformation:us-east-1:${EXPECTED_ACCOUNT}:stack/codehawks-bootstrap/*"
 
           actual_account="$(aws sts get-caller-identity --query Account --output text)"
           caller_arn="$(aws sts get-caller-identity --query Arn --output text)"
 
-          [[ "$actual_account" == "$expected_account" ]]
-          [[ "$caller_arn" == "arn:aws:sts::${expected_account}:assumed-role/${role_name}/"* ]]
+          [[ "$actual_account" == "$EXPECTED_ACCOUNT" ]]
+          [[ "$caller_arn" == "arn:aws:sts::${EXPECTED_ACCOUNT}:assumed-role/codehawks-bootstrap-update/"* ]]
 
-          allows_oidc_list() {
-            jq -e '
+          has_explicit_deny() {
+            local action="$1"
+            local resource="$2"
+            jq -e --arg action "$action" --arg resource "$resource" '
               def as_array: if type == "array" then . else [.] end;
               any(
                 .Statement[];
-                .Effect == "Allow"
-                and ((.Action | as_array | index("iam:ListOpenIDConnectProviders")) != null)
-                and ((.Resource | as_array | index("*")) != null)
+                .Effect == "Deny"
+                and ((.Action | as_array | index($action)) != null)
+                and ((.Resource | as_array | index($resource)) != null)
               )
+            ' >/dev/null
+          }
+
+          rejects_control_plane_allows() {
+            jq -e '
+              def as_array: if type == "array" then . else [.] end;
+              [
+                .Statement[]
+                | select(.Effect == "Allow")
+                | .Action
+                | as_array[]
+                | select(
+                    . == "iam:CreatePolicyVersion"
+                    or . == "iam:DeletePolicyVersion"
+                    or . == "iam:SetDefaultPolicyVersion"
+                    or . == "iam:DeleteRolePermissionsBoundary"
+                    or . == "iam:PassRole"
+                    or . == "cloudformation:UpdateStack"
+                  )
+              ]
+              | length == 0
             ' >/dev/null
           }
 
@@ -100,14 +150,19 @@ jobs:
               --query PolicyDocument \
               --output json
           )"
-          allows_oidc_list <<<"$inline_policy"
+          rejects_control_plane_allows <<<"$inline_policy"
+          has_explicit_deny "iam:PutRolePolicy" "$routine_role_arn" <<<"$inline_policy"
+          has_explicit_deny "iam:CreatePolicyVersion" "$boundary_arn" <<<"$inline_policy"
+          has_explicit_deny "iam:DeleteRolePermissionsBoundary" "$frontend_role_arn" <<<"$inline_policy"
+          has_explicit_deny "cloudformation:UpdateStack" "$stack_arn" <<<"$inline_policy"
 
-          boundary_arn="$(
+          attached_boundary_arn="$(
             aws iam get-role \
               --role-name "$role_name" \
               --query 'Role.PermissionsBoundary.PermissionsBoundaryArn' \
               --output text
           )"
+          [[ "$attached_boundary_arn" == "$boundary_arn" ]]
           boundary_version="$(
             aws iam get-policy \
               --policy-arn "$boundary_arn" \
@@ -121,8 +176,8 @@ jobs:
               --query 'PolicyVersion.Document' \
               --output json
           )"
-          allows_oidc_list <<<"$boundary_policy"
-
-          # This call proves the effective intersection of the role policy and
-          # its permissions boundary permits the Terraform provider data source.
-          aws iam list-open-id-connect-providers >/dev/null
+          rejects_control_plane_allows <<<"$boundary_policy"
+          has_explicit_deny "iam:PutRolePolicy" "$routine_role_arn" <<<"$boundary_policy"
+          has_explicit_deny "iam:CreatePolicyVersion" "$boundary_arn" <<<"$boundary_policy"
+          has_explicit_deny "iam:DeleteRolePermissionsBoundary" "$frontend_role_arn" <<<"$boundary_policy"
+          has_explicit_deny "cloudformation:UpdateStack" "$stack_arn" <<<"$boundary_policy"

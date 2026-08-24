@@ -86,12 +86,16 @@ jobs:
       run:
         working-directory: infrastructure
     env:
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
       AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
       TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       TF_VAR_budget_alert_email: ${{ secrets.TF_VAR_BUDGET_ALERT_EMAIL }}
+      TF_VAR_api_origin: ${{ vars.API_ORIGIN }}
       TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
       TF_VAR_enable_flat_rate_waf: ${{ vars.ENABLE_FLAT_RATE_WAF }}
+      TF_VAR_media_cdn_origin: ${{ vars.MEDIA_CDN_ORIGIN }}
+      TF_VAR_media_upload_origin: ${{ vars.MEDIA_UPLOAD_ORIGIN }}
       APEX_RECORD_ID: ${{ inputs.apex_record_id }}
       WWW_RECORD_ID: ${{ inputs.www_record_id }}
 
@@ -113,7 +117,14 @@ jobs:
           test -n "$TF_STATE_BUCKET"
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$TF_VAR_budget_alert_email"
+          test -n "$TF_VAR_api_origin"
           test -n "$TF_VAR_cloudflare_zone_id"
+          test -n "$TF_VAR_media_cdn_origin"
+          test -n "$TF_VAR_media_upload_origin"
+          [[ "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]
+          [[ "$AWS_ROLE_ARN" == "arn:aws:iam::${AWS_ACCOUNT_ID}:role/codehawks-infrastructure-apply" ]]
+          [[ "$TF_STATE_BUCKET" == "codehawks-terraform-state-${AWS_ACCOUNT_ID}" ]]
+          [[ "$TF_VAR_enable_flat_rate_waf" == "true" || "$TF_VAR_enable_flat_rate_waf" == "false" ]]
 
           if [[ -z "$APEX_RECORD_ID" && -z "$WWW_RECORD_ID" ]]; then
             echo "Provide at least one record ID from a discovery run." >&2
@@ -172,14 +183,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          readonly expected_account="394270749442"
           readonly expected_role="codehawks-infrastructure-apply"
 
           actual_account="$(aws sts get-caller-identity --query Account --output text)"
           caller_arn="$(aws sts get-caller-identity --query Arn --output text)"
 
-          [[ "$actual_account" == "$expected_account" ]]
-          [[ "$caller_arn" == "arn:aws:sts::${expected_account}:assumed-role/${expected_role}/"* ]]
+          [[ "$actual_account" == "$AWS_ACCOUNT_ID" ]]
+          [[ "$caller_arn" == "arn:aws:sts::${AWS_ACCOUNT_ID}:assumed-role/${expected_role}/"* ]]
           aws iam list-open-id-connect-providers >/dev/null
 
       - name: Initialize remote state
