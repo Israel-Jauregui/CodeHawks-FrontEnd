@@ -5,7 +5,14 @@ from __future__ import annotations
 import copy
 import unittest
 
-from preflight import Config, EXPECTED_DMARC, PreflightError, validate_snapshot
+from preflight import (
+    CloudflareClient,
+    Config,
+    EXPECTED_DMARC,
+    PreflightError,
+    collect_snapshot,
+    validate_snapshot,
+)
 
 
 TOKENS = ("a" * 32, "b" * 32, "c" * 32)
@@ -81,7 +88,36 @@ def snapshot() -> dict[str, object]:
     }
 
 
+class RecordingClient(CloudflareClient):
+    def __init__(self) -> None:
+        self.get_paths: list[str] = []
+        self.list_paths: list[str] = []
+
+    def get(self, path: str) -> dict[str, object]:
+        self.get_paths.append(path)
+        return {"result": {}}
+
+    def list_all(self, path: str) -> list[dict[str, object]]:
+        self.list_paths.append(path)
+        return []
+
+
 class EmailRoutingPreflightTests(unittest.TestCase):
+    def test_apex_routing_dns_read_omits_subdomain_query(self) -> None:
+        current_config = config()
+        client = RecordingClient()
+
+        collect_snapshot(client, current_config)
+
+        self.assertIn(
+            f"zones/{current_config.zone_id}/email/routing/dns",
+            client.get_paths,
+        )
+        self.assertFalse(
+            any("subdomain=" in path for path in client.get_paths),
+            "The zone-apex Email Routing DNS request must not include a subdomain query",
+        )
+
     def test_clean_unconfigured_onboarding_preflight_passes(self) -> None:
         result = validate_snapshot(snapshot(), config())
         self.assertEqual(result["mx_records"], 0)

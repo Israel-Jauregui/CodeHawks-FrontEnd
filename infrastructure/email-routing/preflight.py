@@ -7,7 +7,6 @@ import json
 import os
 import sys
 import urllib.error
-import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Any
@@ -142,7 +141,6 @@ class CloudflareClient:
 
 
 def collect_snapshot(client: CloudflareClient, config: Config) -> dict[str, Any]:
-    quoted_domain = urllib.parse.quote(config.domain, safe="")
     return {
         "token": client.get("user/tokens/verify").get("result") or {},
         "zone": client.get(f"zones/{config.zone_id}").get("result") or {},
@@ -152,7 +150,7 @@ def collect_snapshot(client: CloudflareClient, config: Config) -> dict[str, Any]
         ).get("result")
         or {},
         "routing_dns": client.get(
-            f"zones/{config.zone_id}/email/routing/dns?subdomain={quoted_domain}"
+            f"zones/{config.zone_id}/email/routing/dns"
         ).get("result")
         or {},
         "destinations": client.list_all(
