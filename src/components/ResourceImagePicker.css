@@ -33,6 +33,10 @@
   line-height: 1.35;
 }
 
+.resource-image-picker input[type="file"] {
+  max-width: 100%;
+}
+
 @media (max-width: 640px) {
   .resource-image-picker { grid-template-columns: 1fr; }
 }

@@ -1,0 +1,129 @@
+.members-directory {
+  color: #1f1f1f;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+}
+
+.members-directory__intro h2 {
+  margin: 0 0 6px;
+  color: #003399;
+  font-size: 1.5rem;
+}
+
+.members-directory__intro p {
+  max-width: 760px;
+  margin: 0 0 16px;
+}
+
+.members-directory__search {
+  display: grid;
+  grid-template-columns: minmax(130px, 190px) minmax(0, 420px);
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #7f9db9;
+  background: #eef5ff;
+}
+
+.members-directory__search label {
+  font-weight: bold;
+}
+
+.members-directory__search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  padding: 4px 6px;
+  border: 1px solid #315b8a;
+  background: #fff;
+  color: #111;
+}
+
+.members-directory__status {
+  min-height: 1.4em;
+  margin: 6px 1px 12px;
+  color: #2f4d75;
+}
+
+.members-directory__feedback {
+  padding: 12px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.members-directory__feedback--error {
+  border-color: #8b0000;
+  color: #8b0000;
+  background: #fff5f5;
+}
+
+.members-directory__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 14px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.members-directory__card {
+  min-width: 0;
+}
+
+.members-directory__card > .window-body {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+}
+
+.members-directory__avatar {
+  width: 84px;
+  height: 84px;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.members-directory__details {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.members-directory__details h3,
+.members-directory__details p {
+  margin: 0 0 8px;
+}
+
+.members-directory__details h3 {
+  color: #003399;
+  font-size: 1.1rem;
+}
+
+.members-directory__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0;
+  margin: 10px 0;
+  list-style: none;
+}
+
+.members-directory__skills li {
+  padding: 2px 6px;
+  border: 1px solid #316ac5;
+  background: #eaf3ff;
+  color: #143d77;
+}
+
+.members-directory__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+@media (max-width: 480px) {
+  .members-directory__search,
+  .members-directory__card > .window-body {
+    grid-template-columns: 1fr;
+  }
+}

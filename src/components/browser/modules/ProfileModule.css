@@ -67,6 +67,40 @@
   grid-column: 1 / -1;
 }
 
+.profile-module__field-help {
+  align-self: end;
+  margin: 0;
+  color: #3f4f62;
+  font-size: 11px;
+}
+
+.profile-module__preferences {
+  padding: 12px;
+  border: 1px solid #7f9db9;
+  background: #eef5ff !important;
+}
+
+.profile-module__checkbox-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.profile-module__checkbox-row > label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  margin-left: 19px;
+  line-height: 1.35;
+}
+
+.profile-module__checkbox-row > label span {
+  color: #2f4055;
+}
+
 .profile-module__details dl {
   margin: 0;
 }
@@ -85,6 +119,65 @@
 
 .profile-module__details dd {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-module__data-actions,
+.profile-delete-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.profile-module__danger-button {
+  border: 1px solid #7a0000;
+  background: #fff1f1;
+  color: #7a0000;
+  font-weight: bold;
+}
+
+.profile-module__contact-note {
+  margin-bottom: 0;
+}
+
+.profile-delete-dialog {
+  width: min(520px, calc(100vw - 20px));
+  max-width: none;
+  padding: 3px;
+  border: 0;
+}
+
+.profile-delete-dialog::backdrop {
+  background: rgba(16, 32, 64, 0.58);
+}
+
+.profile-delete-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: #eaf3ff;
+}
+
+.profile-delete-dialog__body p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.profile-delete-dialog__body label {
+  display: block;
+}
+
+.profile-delete-dialog__body input {
+  width: 100%;
+}
+
+.profile-module__inline-error {
+  padding: 7px;
+  border: 1px solid #8b0000;
+  background: #fff;
+  color: #8b0000;
 }
 
 @media (max-width: 640px) {
@@ -102,5 +195,10 @@
 
   .profile-module__form {
     grid-template-columns: 1fr;
+  }
+
+  .profile-module__details dl > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
   }
 }

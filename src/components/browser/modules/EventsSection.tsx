@@ -35,16 +35,16 @@ export default function EventsSection() {
         <span className="events-splash-animate">Upcoming Events</span>
       </h2>
 
-      {isLoading && <fieldset className="event-card"><legend>Loading</legend><p>Contacting the CodeHawks calendar...</p></fieldset>}
+      {isLoading && <fieldset className="event-card"><legend>Loading</legend><p role="status">Contacting the CodeHawks calendar...</p></fieldset>}
       {!isLoading && error && (
-        <fieldset className="event-card event-card--error">
+        <fieldset className="event-card event-card--error" role="alert">
           <legend>Calendar Error</legend>
           <p>{error}</p>
           <button type="button" onClick={() => void reload()}>Try Again</button>
         </fieldset>
       )}
       {!isLoading && !error && events.length === 0 && <fieldset className="event-card"><legend>No Events</legend><p>There are no published events yet. Check back soon.</p></fieldset>}
-      {rsvpError && <p className="event-rsvp-message event-rsvp-message--error">{rsvpError}</p>}
+      {rsvpError && <p className="event-rsvp-message event-rsvp-message--error" role="alert">{rsvpError}</p>}
 
       {!isLoading && !error && events.length > 0 && (
         <div className="events-list">
@@ -60,10 +60,10 @@ export default function EventsSection() {
                   <p>{clubEvent.description}</p>
                   <span className="event-time">{timeFormatter.format(startsAt)} – {timeFormatter.format(endsAt)} · {clubEvent.location}</span>
                   {canRsvp ? (
-                    <div className="event-rsvp-actions" aria-label={`RSVP for ${clubEvent.name}`}>
-                      <button type="button" className={rsvp === 'going' ? 'is-selected' : ''} onClick={() => void setRsvp(clubEvent.id, 'going')} disabled={isSavingRsvp}>Going</button>
-                      <button type="button" className={rsvp === 'maybe' ? 'is-selected' : ''} onClick={() => void setRsvp(clubEvent.id, 'maybe')} disabled={isSavingRsvp}>Maybe</button>
-                      {rsvp && <span>Saved: {rsvp}</span>}
+                    <div className="event-rsvp-actions" role="group" aria-label={`RSVP for ${clubEvent.name}`}>
+                      <button type="button" aria-pressed={rsvp === 'going'} className={rsvp === 'going' ? 'is-selected' : ''} onClick={() => void setRsvp(clubEvent.id, 'going')} disabled={isSavingRsvp}>Going</button>
+                      <button type="button" aria-pressed={rsvp === 'maybe'} className={rsvp === 'maybe' ? 'is-selected' : ''} onClick={() => void setRsvp(clubEvent.id, 'maybe')} disabled={isSavingRsvp}>Maybe</button>
+                      {rsvp && <span role="status" aria-live="polite">Saved: {rsvp}</span>}
                     </div>
                   ) : <p className="event-rsvp-message">Sign in to RSVP.</p>}
                 </div>

@@ -45,10 +45,11 @@ export const MultiLineTypeWriter: React.FC<MultiLineTypeWriterProps> = ({
     } else if (delay === 0 && !hasStarted) {
       setHasStarted(true);
     }
+    return undefined;
   }, [delay, hasStarted]);
 
   useEffect(() => {
-    if (!hasStarted) return;
+    if (!hasStarted) return undefined;
 
     // Check if all lines are complete
     const allComplete = currentIndices.every((index, i) => index >= lines[i].length);
@@ -69,7 +70,7 @@ export const MultiLineTypeWriter: React.FC<MultiLineTypeWriterProps> = ({
         }, loopDelay);
         return () => clearTimeout(loopTimer);
       }
-      return;
+      return undefined;
     }
 
     if (!allComplete) {
@@ -97,6 +98,7 @@ export const MultiLineTypeWriter: React.FC<MultiLineTypeWriterProps> = ({
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [currentIndices, lines, speed, isComplete, hasStarted, onComplete, loop, loopDelay]);
 
   // Reset only when the actual text content changes.

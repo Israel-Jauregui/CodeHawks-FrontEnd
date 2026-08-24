@@ -1,9 +1,9 @@
-import type { ClubEvent, MemberSummary, Project, Team } from '../types/clubData';
+import type { ClubEvent, MemberLookupSummary, Project, PublicDirectoryMember, Team } from '../types/clubData';
 
 const createdAt = '2026-01-15T17:00:00.000Z';
 const updatedAt = '2026-08-01T17:00:00.000Z';
 
-export const mockMembers: MemberSummary[] = [
+export const mockMembers: Array<MemberLookupSummary & PublicDirectoryMember & { isPublicProfile: boolean }> = [
   ['aidenf', 'Aiden Flores', 'Frontend engineer who loves polished UI interactions.', ['React', 'TypeScript']],
   ['mariac', 'Maria Chen', 'Full-stack builder focused on data visualization.', ['Python', 'React']],
   ['joshk', 'Josh Kim', 'Backend-focused developer and cloud tinkerer.', ['AWS', 'TypeScript']],
@@ -14,14 +14,12 @@ export const mockMembers: MemberSummary[] = [
   id: `00000000-0000-4000-8000-00000000000${index + 1}`,
   handle: handle as string,
   displayName: displayName as string,
-  role: 'member',
   bio: bio as string,
   githubUrl: `https://github.com/${handle as string}`,
   linkedinUrl: `https://linkedin.com/in/${handle as string}`,
   minors: [],
   techStack: techStack as string[],
-  createdAt,
-  updatedAt,
+  isPublicProfile: index < 2,
 }));
 
 export const mockProjects: Project[] = [
@@ -92,7 +90,7 @@ export const mockTeams: Team[] = [
 export const mockEvents: ClubEvent[] = [
   {
     id: '30000000-0000-4000-8000-000000000001',
-    name: 'App Development Club Weekly Meeting',
+    name: 'CodeHawks Weekly Meeting',
     description: 'Discuss ongoing projects, upcoming opportunities, and get help with app ideas and coding challenges.',
     location: 'UNG Dahlonega Campus',
     startsAt: '2026-08-19T17:00:00-04:00',

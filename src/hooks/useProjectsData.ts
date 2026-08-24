@@ -4,7 +4,7 @@ import type {
   CreateProjectInput,
   CreateProjectResult,
   JoinRequestStatus,
-  MemberSummary,
+  MemberLookupSummary,
   Project,
 } from '../types/clubData';
 
@@ -19,7 +19,7 @@ interface UseProjectsDataResult {
   joinError: string | null;
   reload: () => Promise<void>;
   addProject: (input: CreateProjectInput) => Promise<CreateProjectResult | null>;
-  searchMembers: (query: string) => Promise<MemberSummary[]>;
+  searchMembers: (query: string) => Promise<MemberLookupSummary[]>;
   requestToJoin: (projectId: string) => Promise<JoinRequestStatus | null>;
 }
 

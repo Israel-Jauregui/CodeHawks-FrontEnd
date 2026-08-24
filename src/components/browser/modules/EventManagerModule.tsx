@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
 import { canManageEvents } from '../../../auth/permissions';
 import { apiRequest, apiRequestPage } from '../../../services/apiClient';
+import { prepareImageForUpload, uploadWithPresignedPost, validateImageFile, type PresignedImageUpload } from '../../../services/mediaUpload';
 import type { ClubEvent } from '../../../types/clubData';
+import ResourceImagePicker from '../../ResourceImagePicker';
 import './EventManagerModule.css';
 
 interface EventForm {
@@ -11,7 +13,6 @@ interface EventForm {
   location: string;
   startsAt: string;
   endsAt: string;
-  imageUrl: string;
   published: boolean;
 }
 
@@ -21,18 +22,8 @@ const EMPTY_FORM: EventForm = {
   location: '',
   startsAt: '',
   endsAt: '',
-  imageUrl: '',
   published: true,
 };
-
-function isHttpsOrEmpty(value: string): boolean {
-  if (!value.trim()) return true;
-  try {
-    return new URL(value).protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
 
 function toApiTimestamp(value: string): string {
   return new Date(value).toISOString();
@@ -62,6 +53,7 @@ export default function EventManagerModule() {
   const isAuthorized = canManageEvents(user?.role);
   const [events, setEvents] = useState<ClubEvent[]>([]);
   const [form, setForm] = useState<EventForm>(EMPTY_FORM);
+  const [imageFile, setImageFile] = useState<File | undefined>();
   const [isLoading, setIsLoading] = useState(isAuthorized);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,14 +102,14 @@ export default function EventManagerModule() {
       setError('New events must end in the future.');
       return;
     }
-    if (!isHttpsOrEmpty(form.imageUrl)) {
-      setError('The image URL must be a valid HTTPS URL.');
+    const imageError = validateImageFile(imageFile);
+    if (imageError) {
+      setError(imageError);
       return;
     }
-
     setIsSaving(true);
     try {
-      const created = await apiRequest<ClubEvent>('/v1/events', {
+      let created = await apiRequest<ClubEvent>('/v1/events', {
         method: 'POST',
         auth: true,
         body: {
@@ -126,12 +118,28 @@ export default function EventManagerModule() {
           location: form.location.trim(),
           startsAt: toApiTimestamp(form.startsAt),
           endsAt: toApiTimestamp(form.endsAt),
-          ...(form.imageUrl.trim() ? { imageUrl: form.imageUrl.trim() } : {}),
           published: form.published,
         },
       });
-      setMessage(`Event “${created.name}” was ${created.published ? 'published' : 'saved as a draft'}.`);
+      let imageMessage = '';
+      if (imageFile) {
+        try {
+          const prepared = await prepareImageForUpload(imageFile);
+          const upload = await apiRequest<PresignedImageUpload>(`/v1/events/${encodeURIComponent(created.id)}/image-upload`, {
+            method: 'POST', auth: true, body: { contentType: prepared.file.type, fileSize: prepared.file.size },
+          });
+          await uploadWithPresignedPost(upload, prepared.file);
+          created = await apiRequest<ClubEvent>(`/v1/events/${encodeURIComponent(created.id)}/image-upload/finalize`, {
+            method: 'POST', auth: true, body: { uploadId: upload.uploadId },
+          });
+          imageMessage = ' Its image was uploaded to controlled CodeHawks storage.';
+        } catch (unknownImageError) {
+          imageMessage = ` The event was saved, but its image was not attached: ${unknownImageError instanceof Error ? unknownImageError.message : 'upload failed.'}`;
+        }
+      }
+      setMessage(`Event “${created.name}” was ${created.published ? 'published' : 'saved as a draft'}.${imageMessage}`);
       setForm(EMPTY_FORM);
+      setImageFile(undefined);
       await reload();
     } catch (unknownError) {
       setError(unknownError instanceof Error ? unknownError.message : 'Unable to create the event.');
@@ -150,8 +158,8 @@ export default function EventManagerModule() {
         <button type="button" onClick={() => void reload()} disabled={isLoading}>Refresh</button>
       </div>
 
-      {message && <fieldset className="event-manager__success"><legend>Success</legend><p>{message}</p></fieldset>}
-      {error && <fieldset className="event-manager__error"><legend>Error</legend><p>{error}</p></fieldset>}
+      {message && <fieldset className="event-manager__success" role="status" aria-live="polite"><legend>Success</legend><p>{message}</p></fieldset>}
+      {error && <fieldset className="event-manager__error" role="alert"><legend>Error</legend><p>{error}</p></fieldset>}
 
       <fieldset className="event-manager__form-wrapper">
         <legend>Create Event</legend>
@@ -161,15 +169,15 @@ export default function EventManagerModule() {
           <label><span>Starts *</span><input type="datetime-local" value={form.startsAt} onChange={(event) => setForm((current) => ({ ...current, startsAt: event.target.value }))} required /></label>
           <label><span>Ends *</span><input type="datetime-local" value={form.endsAt} onChange={(event) => setForm((current) => ({ ...current, endsAt: event.target.value }))} required /></label>
           <label className="event-manager__full"><span>Description *</span><textarea rows={5} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} maxLength={5000} required /></label>
-          <label className="event-manager__full"><span>Image URL</span><input type="url" value={form.imageUrl} onChange={(event) => setForm((current) => ({ ...current, imageUrl: event.target.value }))} placeholder="https://example.com/event.png" /></label>
-          <label className="event-manager__publish"><input type="checkbox" checked={form.published} onChange={(event) => setForm((current) => ({ ...current, published: event.target.checked }))} /><span>Publish immediately</span></label>
+          <div className="event-manager__full"><ResourceImagePicker file={imageFile} onFileChange={setImageFile} /></div>
+          <div className="event-manager__publish"><input id="event-publish-choice" type="checkbox" checked={form.published} onChange={(event) => setForm((current) => ({ ...current, published: event.target.checked }))} /><label htmlFor="event-publish-choice">Publish immediately</label></div>
           <div className="event-manager__actions"><button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : form.published ? 'Create and Publish' : 'Save Draft'}</button></div>
         </form>
       </fieldset>
 
       <fieldset className="event-manager__schedule">
         <legend>Upcoming Schedule</legend>
-        {isLoading && <p>Loading upcoming events...</p>}
+        {isLoading && <p role="status">Loading upcoming events...</p>}
         {!isLoading && events.length === 0 && <p>No upcoming drafts or published events.</p>}
         {!isLoading && events.length > 0 && (
           <div className="event-manager__list">

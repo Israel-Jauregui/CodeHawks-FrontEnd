@@ -10,7 +10,7 @@ export default function ProjectsPage() {
   return (
     <div className="projects-page-root">
       <div className="window projects-page-window">
-        <TopAppBar title="ADC Projects" showAuthButton={false} />
+        <TopAppBar title="CodeHawks Projects" showAuthButton={false} />
         <div className="window-body projects-page-body">
           <ProjectsModule />
         </div>

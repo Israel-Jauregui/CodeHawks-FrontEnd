@@ -1,0 +1,131 @@
+.legal-page-shell {
+  min-height: 100vh;
+  padding: clamp(10px, 3vw, 28px);
+  color: #1f1f1f;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+}
+
+.legal-page-header,
+.legal-page-main {
+  width: min(980px, 100%);
+  margin: 0 auto 14px;
+}
+
+.legal-page-header__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 12px;
+  background: #ece9d8;
+}
+
+.legal-page-header__brand {
+  color: #003399;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.legal-page-header nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 14px;
+}
+
+.legal-page-content {
+  margin: 0;
+  padding: clamp(18px, 4vw, 38px);
+  background: #fff;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.legal-page-content h1 {
+  margin: 0 0 5px;
+  color: #003399;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  line-height: 1.15;
+}
+
+.legal-page-content h2 {
+  margin: 30px 0 8px;
+  color: #003399;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.legal-page-content h3 {
+  margin: 18px 0 6px;
+  color: #143d77;
+  font-size: 1rem;
+}
+
+.legal-page-content p,
+.legal-page-content ul,
+.legal-page-content ol,
+.legal-page-content dl {
+  margin: 8px 0 12px;
+}
+
+.legal-page-content li + li {
+  margin-top: 6px;
+}
+
+.legal-page-content__updated {
+  margin-top: 0 !important;
+  color: #3d3d3d;
+}
+
+.legal-page-content__notice {
+  margin: 18px 0 24px;
+  padding: 10px 12px;
+  border: 1px solid #7f9db9;
+  border-left: 5px solid #316ac5;
+  background: #eef5ff;
+}
+
+.legal-page-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #7f9db9;
+}
+
+.legal-page-content table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  line-height: 1.45;
+}
+
+.legal-page-content th,
+.legal-page-content td {
+  padding: 9px 10px;
+  border: 1px solid #aca899;
+  text-align: left;
+  vertical-align: top;
+}
+
+.legal-page-content th {
+  background: #dcecff;
+  color: #102e5b;
+}
+
+@media (max-width: 520px) {
+  .legal-page-shell {
+    padding: 6px;
+  }
+
+  .legal-page-header__body {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .legal-page-header nav {
+    justify-content: flex-start;
+  }
+
+  .legal-page-content {
+    padding: 16px 13px;
+  }
+}

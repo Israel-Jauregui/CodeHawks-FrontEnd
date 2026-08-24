@@ -20,12 +20,14 @@ import {
   configureAccessTokenProvider,
 } from '../services/apiClient';
 import {
+  prepareImageForUpload,
   uploadWithPresignedPost,
   type PresignedImageUpload,
 } from '../services/mediaUpload';
 import type {
   MemberProfile,
   MemberProfilePatch,
+  MemberDataExport,
   Notification,
 } from '../types/clubData';
 import { acquireApiToken, loginRequest } from './msalConfig';
@@ -44,6 +46,9 @@ interface AuthContextValue {
   refreshProfile: () => Promise<void>;
   updateProfile: (patch: MemberProfilePatch) => Promise<MemberProfile>;
   uploadAvatar: (file: File) => Promise<MemberProfile>;
+  removeAvatar: () => Promise<MemberProfile>;
+  exportMyData: () => Promise<MemberDataExport>;
+  deleteAccount: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
   markNotificationRead: (notificationId: string, read: boolean) => Promise<void>;
 }
@@ -136,14 +141,57 @@ export function EntraAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const uploadAvatar = useCallback(async (file: File) => {
+    const prepared = await prepareImageForUpload(file);
     const upload = await apiRequest<PresignedImageUpload>('/v1/me/avatar-upload', {
       method: 'POST',
       auth: true,
-      body: { contentType: file.type, fileSize: file.size },
+      body: { contentType: prepared.file.type, fileSize: prepared.file.size },
     });
-    await uploadWithPresignedPost(upload, file);
-    return updateProfile({ avatarUrl: upload.publicUrl });
-  }, [updateProfile]);
+    await uploadWithPresignedPost(upload, prepared.file);
+    const profile = await apiRequest<MemberProfile>('/v1/me/avatar-upload/finalize', {
+      method: 'POST',
+      auth: true,
+      body: { uploadId: upload.uploadId },
+    });
+    setUser(profile);
+    return profile;
+  }, []);
+
+  const removeAvatar = useCallback(async () => {
+    const profile = await apiRequest<MemberProfile>('/v1/me/avatar', {
+      method: 'DELETE',
+      auth: true,
+    });
+    setUser(profile);
+    return profile;
+  }, []);
+
+  const exportMyData = useCallback(() => apiRequest<MemberDataExport>('/v1/me/export', {
+    auth: true,
+  }), []);
+
+  const deleteAccount = useCallback(async () => {
+    await apiRequest<void>('/v1/me', { method: 'DELETE', auth: true });
+    const account = getAccount();
+    setUser(null);
+    setNotifications([]);
+    setError(null);
+
+    /*
+     * The API deletion is authoritative. Microsoft sign-out happens after it
+     * and must never turn a successful deletion into a misleading failure.
+     * Start remote sign-out as a best-effort task, but clear MSAL's local
+     * session immediately so navigation cannot recreate the deleted profile.
+    */
+    void instance.logoutPopup({
+      ...(account ? { account } : {}),
+      mainWindowRedirectUri: window.location.origin,
+      postLogoutRedirectUri: window.location.origin,
+    })
+      .catch(() => undefined);
+    instance.setActiveAccount(null);
+    await instance.clearCache(account ? { account } : undefined).catch(() => undefined);
+  }, [getAccount, instance]);
 
   const refreshNotifications = useCallback(async () => {
     if (!getAccount() || !user) {
@@ -225,6 +273,9 @@ export function EntraAuthProvider({ children }: { children: ReactNode }) {
     refreshProfile,
     updateProfile,
     uploadAvatar,
+    removeAvatar,
+    exportMyData,
+    deleteAccount,
     refreshNotifications,
     markNotificationRead,
   }), [
@@ -239,6 +290,9 @@ export function EntraAuthProvider({ children }: { children: ReactNode }) {
     refreshProfile,
     updateProfile,
     uploadAvatar,
+    removeAvatar,
+    exportMyData,
+    deleteAccount,
     user,
   ]);
 
@@ -263,6 +317,9 @@ export function UnavailableAuthProvider({ children }: { children: ReactNode }) {
     refreshProfile: async () => undefined,
     updateProfile: async () => { throw new Error(configurationError); },
     uploadAvatar: async () => { throw new Error(configurationError); },
+    removeAvatar: async () => { throw new Error(configurationError); },
+    exportMyData: async () => { throw new Error(configurationError); },
+    deleteAccount: async () => { throw new Error(configurationError); },
     refreshNotifications: async () => undefined,
     markNotificationRead: async () => undefined,
   }), [configurationError]);

@@ -4,7 +4,10 @@ import LoginModal from '../components/LoginModal';
 import NighthawkMascot from '../components/NighthawkMascot';
 import HacklonegaAd, { HacklonegaNgMark } from '../components/HacklonegaAd';
 import BrowserContentHost from '../components/browser/BrowserContentHost';
+import LegalFooter from '../components/LegalFooter';
 import { useBrowserNavigation, type BrowserRoute } from '../components/browser/hooks/useBrowserNavigation';
+import { usePageMetadata } from '../hooks/usePageMetadata';
+import { SITE_DESCRIPTION, SITE_IDENTITY } from '../constants/site';
 import './Homepage.css';
 
 type DesktopWindowId = 'browser' | 'cwInfo' | 'hacklonega';
@@ -30,7 +33,7 @@ const EASTERN_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
 });
 
 /**
- * Homepage — The main (and currently only) page of the ADC website.
+ * Homepage — The main CodeHawks website surface.
  *
  * HOW THIS COMPONENT IS STRUCTURED (React concepts explained):
  * ─────────────────────────────────────────────────────────────
@@ -63,7 +66,7 @@ const EASTERN_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
  *   ┌─── .xp-desktop (fills viewport) ─────────────────────────┐
  *   │                                                           │
  *   │  ┌── .desktop-icons ──┐                                   │
- *   │  │ [ADC Website]      │   ┌── .window (conditional) ──┐  │
+ *   │  │ [CodeHawks Website]│   ┌── .window (conditional) ──┐  │
  *   │  │ [Projects]         │   │ TopAppBar (title bar +     │  │
  *   │  │ [Hacklonega]       │   │   toolbars)                │  │
  *   │  │                    │   │ Window body (sections)     │  │
@@ -71,10 +74,27 @@ const EASTERN_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
  *   │                           └────────────────────────────┘  │
  *   └──────────────────────────────────────────────────────────┘
  */
-export const Homepage: React.FC = () => {
+interface HomepageProps {
+  initialRoute?: BrowserRoute;
+}
+
+const PAGE_METADATA: Record<BrowserRoute, { title: string; description: string; path: string; noIndex?: boolean }> = {
+  home: {
+    title: SITE_IDENTITY.publicName,
+    description: SITE_DESCRIPTION,
+    path: '/',
+  },
+  projects: { title: 'Projects', description: 'Browse public CodeHawks software projects.', path: '/projects' },
+  team: { title: 'Teams', description: 'Browse public CodeHawks project, study, and competition teams.', path: '/team' },
+  profile: { title: 'Profile', description: 'Manage your private CodeHawks member profile and privacy choices.', path: '/profile', noIndex: true },
+  notifications: { title: 'Notifications', description: 'Review your CodeHawks member notifications.', path: '/notifications', noIndex: true },
+  'event-manager': { title: 'Event Manager', description: 'Manage CodeHawks club events.', path: '/manage/events', noIndex: true },
+};
+
+export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => {
   const DESKTOP_WINDOW_ORDER: DesktopWindowId[] = ['browser', 'cwInfo', 'hacklonega'];
   const WINDOW_DISPLAY_NAMES: Record<DesktopWindowId, string> = {
-    browser: 'ADC Website',
+    browser: `${SITE_IDENTITY.publicName} Website`,
     cwInfo: 'Coding Warriors',
     hacklonega: 'Hacklonega',
   };
@@ -100,7 +120,7 @@ export const Homepage: React.FC = () => {
   const startMenuLinks = [
     {
       id: 'adc-connect',
-      label: 'Application Development Club',
+      label: SITE_IDENTITY.registeredOrganizationName,
       href: 'https://connect.ung.edu/organization/app-development-club-of-ung--dah-',
       iconType: 'club',
     },
@@ -215,7 +235,9 @@ export const Homepage: React.FC = () => {
     navigateToRoute,
     goBack,
     goForward,
-  } = useBrowserNavigation();
+  } = useBrowserNavigation(initialRoute);
+
+  usePageMetadata(PAGE_METADATA[currentRoute]);
 
   // These constants define the "default launch slot" of the browser
   // window on the XP desktop. We keep the browser offset from the icon
@@ -554,7 +576,7 @@ export const Homepage: React.FC = () => {
   const desktopIcons = [
     {
       id: 'adc-website',
-      label: 'ADC Website',
+      label: `${SITE_IDENTITY.publicName} Website`,
       iconType: 'globe' as const,
       onActivate: () => launchBrowserWithRoute('home'),
     },
@@ -844,7 +866,7 @@ export const Homepage: React.FC = () => {
         </div>
       )}
 
-      <footer className="xp-taskbar" aria-label="Desktop taskbar">
+      <div className="xp-taskbar" role="navigation" aria-label="Desktop taskbar">
         <div className="xp-start-menu-container" ref={startMenuRef}>
           <button
             className="xp-taskbar__start"
@@ -858,26 +880,24 @@ export const Homepage: React.FC = () => {
             <span className="xp-taskbar__start-text">start</span>
           </button>
           {isStartMenuOpen && (
-            <div className="xp-start-menu" role="menu" aria-label="UNG Club links">
+            <nav className="xp-start-menu" aria-label="UNG club links">
               <div className="xp-start-menu__header">UNG Connect</div>
               <div className="xp-start-menu__items">
                 {startMenuLinks.map((item) => (
-                  <button
+                  <a
                     key={item.id}
-                    type="button"
                     className="xp-start-menu__item"
-                    role="menuitem"
-                    onClick={() => {
-                      window.open(item.href, '_blank', 'noopener,noreferrer');
-                      setIsStartMenuOpen(false);
-                    }}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsStartMenuOpen(false)}
                   >
                     <span className={`xp-start-menu__item-icon xp-start-menu__item-icon--${item.iconType}`} aria-hidden="true"></span>
                     <span className="xp-start-menu__item-label">{item.label}</span>
-                  </button>
+                  </a>
                 ))}
               </div>
-            </div>
+            </nav>
           )}
         </div>
         <div className="xp-taskbar__windows" role="toolbar" aria-label="Open windows">
@@ -899,6 +919,7 @@ export const Homepage: React.FC = () => {
             );
           })}
         </div>
+        <LegalFooter compact />
         <div className="xp-taskbar__clock" aria-label="System tray">
           <span className="xp-taskbar__network" aria-hidden="true">
             <span className="xp-taskbar__network-bar xp-taskbar__network-bar--1"></span>
@@ -914,7 +935,7 @@ export const Homepage: React.FC = () => {
             {trayTime}
           </time>
         </div>
-      </footer>
+      </div>
     </div>
   );
 };

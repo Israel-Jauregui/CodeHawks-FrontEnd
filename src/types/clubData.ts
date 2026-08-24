@@ -7,7 +7,13 @@ export type ClubRole =
   | 'vice_president'
   | 'president';
 
-export interface MemberSummary {
+export interface MemberLookupSummary {
+  id: string;
+  handle: string;
+  displayName: string;
+}
+
+export interface MemberProfile {
   id: string;
   handle: string;
   displayName: string;
@@ -21,19 +27,21 @@ export interface MemberSummary {
   techStack: string[];
   createdAt: string;
   updatedAt: string;
-}
-
-export interface MemberProfile extends MemberSummary {
   email: string;
-  identityProvider: 'entra';
+  identityProvider: 'entra' | 'cognito';
   identitySubject: string;
   identityTenant?: string;
+  isPublicProfile: boolean;
+  newsletterOptIn: boolean;
   status: 'active' | 'suspended';
   lastSeenAt: string;
 }
 
 export interface MemberProfilePatch {
+  handle?: string;
   displayName?: string;
+  isPublicProfile?: boolean;
+  newsletterOptIn?: boolean;
   bio?: string | null;
   avatarUrl?: string | null;
   githubUrl?: string | null;
@@ -41,6 +49,42 @@ export interface MemberProfilePatch {
   major?: string | null;
   minors?: string[];
   techStack?: string[];
+}
+
+export interface PublicDirectoryMember {
+  handle: string;
+  displayName: string;
+  bio?: string;
+  avatarUrl?: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
+  major?: string;
+  minors?: string[];
+  techStack?: string[];
+}
+
+export interface MemberPreferenceAuditEntry {
+  id: string;
+  actorMemberId: string;
+  memberId: string;
+  changes: {
+    isPublicProfile?: { from: boolean; to: boolean };
+    newsletterOptIn?: { from: boolean; to: boolean };
+  };
+  createdAt: string;
+  policyVersion: '2026-08-23-v1';
+  source: 'self_service_profile';
+}
+
+export interface MemberDataExport {
+  generatedAt: string;
+  profile: unknown;
+  notifications: unknown[];
+  invitations: unknown[];
+  memberships: unknown[];
+  eventRsvps: unknown[];
+  preferenceHistory: MemberPreferenceAuditEntry[];
+  limitations: string[];
 }
 
 export type ProjectStatus = 'draft' | 'pending_review' | 'published' | 'archived';
@@ -54,7 +98,7 @@ export interface Project {
   demoUrl?: string;
   techStack: string[];
   status: ProjectStatus;
-  memberHandles: string[];
+  memberHandles?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -63,7 +107,6 @@ export interface CreateProjectInput {
   name: string;
   description: string;
   repoUrl?: string;
-  imageUrl?: string;
   demoUrl?: string;
   techStack: string[];
   submitForReview: boolean;
@@ -92,7 +135,7 @@ export interface Team {
   joinPolicy: JoinPolicy;
   maxMembers: number;
   memberCount: number;
-  memberHandles: string[];
+  memberHandles?: string[];
   imageUrl?: string;
   eventId?: string;
   createdAt: string;
@@ -105,7 +148,6 @@ export interface CreateTeamInput {
   category: TeamCategory;
   joinPolicy: JoinPolicy;
   maxMembers: number;
-  imageUrl?: string;
   eventId?: string;
   imageFile?: File;
 }
@@ -157,7 +199,7 @@ export interface Notification {
 export interface ClubDataProvider {
   getProjects: () => Promise<Project[]>;
   createProject: (input: CreateProjectInput) => Promise<CreateProjectResult>;
-  searchMembers: (query: string) => Promise<MemberSummary[]>;
+  searchMembers: (query: string) => Promise<MemberLookupSummary[]>;
   requestToJoinProject: (projectId: string) => Promise<JoinRequestStatus>;
   getTeams: () => Promise<Team[]>;
   createTeam: (input: CreateTeamInput) => Promise<CreateTeamResult>;
