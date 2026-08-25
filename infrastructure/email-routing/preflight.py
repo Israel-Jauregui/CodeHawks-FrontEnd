@@ -355,6 +355,22 @@ def _routing_dns_records(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     return []
 
 
+def _routing_dns_errors(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    routing_dns = snapshot.get("routing_dns") or {}
+    if not isinstance(routing_dns, dict):
+        return []
+    errors = routing_dns.get("errors") or []
+    if not isinstance(errors, list):
+        raise PreflightError(
+            "Cloudflare returned an unexpected Email Routing DNS error collection"
+        )
+    if any(not isinstance(error, dict) for error in errors):
+        raise PreflightError(
+            "Cloudflare returned a malformed Email Routing DNS error"
+        )
+    return errors
+
+
 def _matches_source(rule: dict[str, Any], source_address: str) -> bool:
     matchers = rule.get("matchers") or []
     return any(
@@ -467,10 +483,10 @@ def validate_snapshot(snapshot: dict[str, Any], config: Config) -> dict[str, Any
         raise PreflightError("Duplicate apex SPF records detected")
 
     expected_routing_records = _routing_dns_records(snapshot)
+    routing_dns_errors = _routing_dns_errors(snapshot)
     expected_routing_keys = {
         _dns_key(record, config.domain) for record in expected_routing_records
     }
-    live_dns_keys = {_dns_key(record, config.domain) for record in dns_records}
     expected_mx = {
         _dns_key(record, config.domain)
         for record in expected_routing_records
@@ -486,16 +502,44 @@ def validate_snapshot(snapshot: dict[str, Any], config: Config) -> dict[str, Any
         _validate_complete_routing_dns(
             dns_records, config.domain, "Public DNS"
         )
-        if expected_routing_records:
-            _validate_complete_routing_dns(
-                expected_routing_records,
-                config.domain,
-                "Cloudflare's Email Routing DNS response",
+        if routing_dns_errors:
+            error_codes = sorted(
+                str(error.get("code") or "unknown")
+                for error in routing_dns_errors
             )
-            missing_routing_records = expected_routing_keys - live_dns_keys
-            if missing_routing_records:
+            raise PreflightError(
+                "Cloudflare Email Routing reports missing or invalid DNS records "
+                f"(codes: {', '.join(error_codes)})"
+            )
+        if expected_routing_records:
+            live_routing_keys = {
+                _dns_key(record, config.domain)
+                for record in dns_records
+                if (
+                    str(record.get("type") or "").upper() == "MX"
+                    and _dns_name(record.get("name"), config.domain)
+                    == config.domain
+                )
+                or (
+                    str(record.get("type") or "").upper() == "TXT"
+                    and (
+                        (
+                            _dns_name(record.get("name"), config.domain)
+                            == config.domain
+                            and _dns_content("TXT", record.get("content"))
+                            == EXPECTED_ROUTING_SPF
+                        )
+                        or _dns_name(record.get("name"), config.domain)
+                        == f"{ROUTING_DKIM_SELECTOR}.{config.domain}"
+                    )
+                )
+            }
+            unexpected_routing_records = (
+                expected_routing_keys - live_routing_keys
+            )
+            if unexpected_routing_records:
                 raise PreflightError(
-                    "Cloudflare Email Routing DNS is incomplete or changed"
+                    "Cloudflare's Email Routing DNS response conflicts with public DNS"
                 )
     else:
         if live_mx and live_mx != expected_mx:
@@ -626,11 +670,9 @@ def validate_snapshot(snapshot: dict[str, Any], config: Config) -> dict[str, Any
         "routing_enabled": settings_enabled,
         "mx_records": len(live_mx),
         "spf_records": len(live_spf),
-        "routing_dns_records": (
-            5
-            if settings_enabled and not expected_routing_keys
-            else len(expected_routing_keys)
-        ),
+        "routing_dns_records": 5 if settings_enabled else len(expected_routing_keys),
+        "routing_dns_api_records": len(expected_routing_keys),
+        "routing_dns_api_errors": len(routing_dns_errors),
         "ses_dkim_records": len(config.ses_dkim_tokens),
         "destination_present": bool(destinations),
         "destination_verified": destination_verified,
