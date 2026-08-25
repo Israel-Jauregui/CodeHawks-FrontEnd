@@ -211,7 +211,9 @@ the API does return must match that public routing set, and any API-reported
 missing/invalid record still fails closed. Cloudflare-assigned MX priorities may
 differ between the advisory API response and the locked live records; the
 preflight therefore compares API MX records by exact owner and target while still
-rejecting duplicate targets or any non-Cloudflare mail provider.
+rejecting duplicate targets or any non-Cloudflare mail provider. TXT record
+presentation quotes and chunks are normalized before comparison, but the joined
+SPF and DKIM values must still match exactly.
 
 Activation is deliberately two-stage:
 
