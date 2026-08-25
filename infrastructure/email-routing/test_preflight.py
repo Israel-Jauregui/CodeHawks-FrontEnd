@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import copy
 import unittest
+from typing import Any
 
 from preflight import (
     CloudflareClient,
     Config,
     EXPECTED_DMARC,
+    EXPECTED_ROUTING_SPF,
+    PublicDnsClient,
     PreflightError,
     collect_snapshot,
     validate_snapshot,
@@ -68,12 +71,24 @@ def snapshot() -> dict[str, object]:
                     "type": "MX",
                     "name": "codehawks.org",
                     "content": "route1.mx.cloudflare.net",
-                    "priority": 52,
+                    "priority": 46,
+                },
+                {
+                    "type": "MX",
+                    "name": "codehawks.org",
+                    "content": "route2.mx.cloudflare.net",
+                    "priority": 90,
+                },
+                {
+                    "type": "MX",
+                    "name": "codehawks.org",
+                    "content": "route3.mx.cloudflare.net",
+                    "priority": 76,
                 },
                 {
                     "type": "TXT",
                     "name": "codehawks.org",
-                    "content": "v=spf1 include:_spf.mx.cloudflare.net ~all",
+                    "content": EXPECTED_ROUTING_SPF,
                 },
                 {
                     "type": "TXT",
@@ -102,12 +117,82 @@ class RecordingClient(CloudflareClient):
         return []
 
 
+class StaticPublicDnsClient(PublicDnsClient):
+    def __init__(self, records: list[dict[str, object]] | None = None) -> None:
+        self.records = records or []
+        self.queries: tuple[tuple[str, str], ...] = ()
+
+    def resolve(  # type: ignore[override]
+        self, queries: tuple[tuple[str, str], ...], domain: str
+    ) -> list[dict[str, object]]:
+        self.queries = queries
+        return copy.deepcopy(self.records)
+
+
+class FixturePublicDnsClient(PublicDnsClient):
+    def __init__(
+        self, payloads: dict[tuple[str, str, str], dict[str, Any]]
+    ) -> None:
+        self.payloads = payloads
+
+    def _get(  # type: ignore[override]
+        self, resolver: str, endpoint: str, name: str, record_type: str
+    ) -> dict[str, Any]:
+        del endpoint
+        return copy.deepcopy(self.payloads[(resolver, name, record_type)])
+
+
 class EmailRoutingPreflightTests(unittest.TestCase):
+    def test_public_resolvers_parse_the_same_chunked_txt_record(self) -> None:
+        answer = {
+            "Status": 0,
+            "Answer": [
+                {
+                    "name": "codehawks.org.",
+                    "type": 16,
+                    "data": '"v=spf1 include:_spf.mx.cloudflare.net " "~all"',
+                }
+            ],
+        }
+        client = FixturePublicDnsClient(
+            {
+                ("Cloudflare", "codehawks.org", "TXT"): answer,
+                ("Google", "codehawks.org", "TXT"): answer,
+            }
+        )
+
+        records = client.resolve((("codehawks.org", "TXT"),), "codehawks.org")
+
+        self.assertEqual(records[0]["content"], EXPECTED_ROUTING_SPF)
+
+    def test_public_resolver_disagreement_stops(self) -> None:
+        cloudflare_answer = {
+            "Status": 0,
+            "Answer": [
+                {
+                    "name": "codehawks.org.",
+                    "type": 16,
+                    "data": f'"{EXPECTED_ROUTING_SPF}"',
+                }
+            ],
+        }
+        client = FixturePublicDnsClient(
+            {
+                ("Cloudflare", "codehawks.org", "TXT"): cloudflare_answer,
+                ("Google", "codehawks.org", "TXT"): {"Status": 0},
+            }
+        )
+
+        with self.assertRaisesRegex(PreflightError, "resolvers disagree"):
+            client.resolve((("codehawks.org", "TXT"),), "codehawks.org")
+
     def test_apex_routing_dns_read_omits_subdomain_query(self) -> None:
         current_config = config()
         client = RecordingClient()
 
-        collect_snapshot(client, current_config)
+        public_dns_client = StaticPublicDnsClient()
+
+        collected = collect_snapshot(client, current_config, public_dns_client)
 
         self.assertIn(
             f"zones/{current_config.zone_id}/email/routing/dns",
@@ -117,6 +202,12 @@ class EmailRoutingPreflightTests(unittest.TestCase):
             any("subdomain=" in path for path in client.get_paths),
             "The zone-apex Email Routing DNS request must not include a subdomain query",
         )
+        self.assertIn((current_config.domain, "MX"), public_dns_client.queries)
+        self.assertIn(
+            ("cf2024-1._domainkey.codehawks.org", "TXT"),
+            public_dns_client.queries,
+        )
+        self.assertEqual(collected["public_dns_records"], [])
 
     def test_clean_unconfigured_onboarding_preflight_passes(self) -> None:
         result = validate_snapshot(snapshot(), config())
@@ -202,6 +293,103 @@ class EmailRoutingPreflightTests(unittest.TestCase):
         )
         self.assertTrue(result["destination_verified"])
 
+    def test_ready_routing_with_empty_managed_dns_response_uses_public_dns(self) -> None:
+        current = snapshot()
+        routing_records = copy.deepcopy(
+            (current["routing_dns"])["record"]  # type: ignore[index]
+        )
+        current["routing_settings"] = {"enabled": True, "status": "ready"}
+        current["routing_dns"] = {"record": []}
+        current["public_dns_records"] = [
+            *copy.deepcopy(current["dns_records"]),  # type: ignore[arg-type]
+            *routing_records,
+        ]
+        current["destinations"] = [
+            {
+                "email": "owner@example.edu",
+                "verified": "2026-08-24T12:00:00Z",
+            }
+        ]
+
+        result = validate_snapshot(
+            current,
+            config(
+                forwarding_enabled=True,
+                state_has_dns=True,
+                state_has_address=True,
+            ),
+        )
+
+        self.assertEqual(result["routing_dns_records"], 5)
+        self.assertEqual(result["mx_records"], 3)
+        self.assertEqual(result["spf_records"], 1)
+        self.assertTrue(result["destination_verified"])
+
+    def test_ready_routing_with_unexpected_public_mx_stops(self) -> None:
+        current = snapshot()
+        routing_records = copy.deepcopy(
+            (current["routing_dns"])["record"]  # type: ignore[index]
+        )
+        routing_records.append(
+            {
+                "type": "MX",
+                "name": "codehawks.org",
+                "content": "mail.other-provider.example",
+                "priority": 10,
+            }
+        )
+        current["routing_settings"] = {"enabled": True, "status": "ready"}
+        current["routing_dns"] = {"record": []}
+        current["public_dns_records"] = [
+            *copy.deepcopy(current["dns_records"]),  # type: ignore[arg-type]
+            *routing_records,
+        ]
+
+        with self.assertRaisesRegex(PreflightError, "conflicting"):
+            validate_snapshot(current, config(state_has_dns=True))
+
+    def test_ready_routing_with_missing_public_dkim_stops(self) -> None:
+        current = snapshot()
+        routing_records = copy.deepcopy(
+            (current["routing_dns"])["record"][:-1]  # type: ignore[index]
+        )
+        current["routing_settings"] = {"enabled": True, "status": "ready"}
+        current["routing_dns"] = {"record": []}
+        current["public_dns_records"] = [
+            *copy.deepcopy(current["dns_records"]),  # type: ignore[arg-type]
+            *routing_records,
+        ]
+
+        with self.assertRaisesRegex(PreflightError, "DKIM record is incomplete"):
+            validate_snapshot(current, config(state_has_dns=True))
+
+    def test_ready_routing_with_missing_public_dmarc_stops(self) -> None:
+        current = snapshot()
+        routing_records = copy.deepcopy(
+            (current["routing_dns"])["record"]  # type: ignore[index]
+        )
+        current["routing_settings"] = {"enabled": True, "status": "ready"}
+        current["routing_dns"] = {"record": []}
+        current["public_dns_records"] = routing_records
+
+        with self.assertRaisesRegex(PreflightError, "DMARC policy is missing"):
+            validate_snapshot(current, config(state_has_dns=True))
+
+    def test_ready_routing_with_partial_api_dns_response_stops(self) -> None:
+        current = snapshot()
+        routing_records = copy.deepcopy(
+            (current["routing_dns"])["record"]  # type: ignore[index]
+        )
+        current["routing_settings"] = {"enabled": True, "status": "ready"}
+        current["routing_dns"] = {"record": routing_records[:-1]}
+        current["public_dns_records"] = [
+            *copy.deepcopy(current["dns_records"]),  # type: ignore[arg-type]
+            *routing_records,
+        ]
+
+        with self.assertRaisesRegex(PreflightError, "DKIM record is incomplete"):
+            validate_snapshot(current, config(state_has_dns=True))
+
     def test_enabled_catch_all_stops(self) -> None:
         current = snapshot()
         current["catch_all"] = {"enabled": True}
@@ -212,9 +400,9 @@ class EmailRoutingPreflightTests(unittest.TestCase):
         current = snapshot()
         current["routing_settings"] = {"enabled": True, "status": "ready"}
         current["dns_records"].extend(  # type: ignore[union-attr]
-            copy.deepcopy((current["routing_dns"])["record"][:2])  # type: ignore[index]
+            copy.deepcopy((current["routing_dns"])["record"][:-1])  # type: ignore[index]
         )
-        with self.assertRaisesRegex(PreflightError, "DNS is incomplete"):
+        with self.assertRaisesRegex(PreflightError, "DKIM record is incomplete"):
             validate_snapshot(current, config(state_has_dns=True))
 
     def test_unmanaged_exact_rule_stops(self) -> None:
