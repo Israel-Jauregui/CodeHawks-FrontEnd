@@ -208,7 +208,10 @@ when both public resolvers show the exact three reviewed Cloudflare MX targets,
 the single reviewed SPF value, a nonempty Cloudflare routing-DKIM key, the
 reviewed DMARC value, and all three unchanged SES Easy DKIM CNAMEs. Every record
 the API does return must match that public routing set, and any API-reported
-missing/invalid record still fails closed.
+missing/invalid record still fails closed. Cloudflare-assigned MX priorities may
+differ between the advisory API response and the locked live records; the
+preflight therefore compares API MX records by exact owner and target while still
+rejecting duplicate targets or any non-Cloudflare mail provider.
 
 Activation is deliberately two-stage:
 
