@@ -200,6 +200,15 @@ Cloudflare Email Routing handles only inbound mail for the exact public contact 
 
 The protected destination has no Terraform default and is supplied only through the `EMAIL_FORWARDING_DESTINATION` environment secret. The approved initial value is the owner-selected UNG mailbox recorded in `COMPLIANCE.md`; changing officers requires a reviewed secret update while the forwarding rule is disabled. `CLOUDFLARE_ACCOUNT_ID` is non-secret but protected as an environment variable so the preflight can prove that the configured zone belongs to the expected account.
 
+The preflight resolves the protected MX, SPF, routing-DKIM, DMARC, and SES Easy
+DKIM records through both Cloudflare and Google DNS-over-HTTPS and stops if the
+normalized answers disagree. Once Email Routing reports `ready`, Cloudflare may
+return an empty managed-DNS list; that response is accepted only when both public
+resolvers show the exact three reviewed Cloudflare MX targets, the single reviewed
+SPF value, a nonempty Cloudflare routing-DKIM key, the reviewed DMARC value, and
+all three unchanged SES Easy DKIM CNAMEs. A partial nonempty API response still
+fails closed.
+
 Activation is deliberately two-stage:
 
 1. Confirm public DNS has no conflicting MX or duplicate SPF, the three SES Easy DKIM CNAMEs are exact, the DMARC record is absent or the reviewed monitoring-only value, Email Routing has no catch-all or unexpected rules, and the account/zone/state identifiers match.
