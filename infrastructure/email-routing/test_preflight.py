@@ -375,19 +375,69 @@ class EmailRoutingPreflightTests(unittest.TestCase):
         with self.assertRaisesRegex(PreflightError, "DMARC policy is missing"):
             validate_snapshot(current, config(state_has_dns=True))
 
-    def test_ready_routing_with_partial_api_dns_response_stops(self) -> None:
+    def test_ready_routing_with_clean_partial_api_dns_response_passes(self) -> None:
         current = snapshot()
         routing_records = copy.deepcopy(
             (current["routing_dns"])["record"]  # type: ignore[index]
         )
         current["routing_settings"] = {"enabled": True, "status": "ready"}
-        current["routing_dns"] = {"record": routing_records[:-1]}
+        current["routing_dns"] = {
+            "record": [*routing_records[:3], routing_records[-1]]
+        }
         current["public_dns_records"] = [
             *copy.deepcopy(current["dns_records"]),  # type: ignore[arg-type]
             *routing_records,
         ]
 
-        with self.assertRaisesRegex(PreflightError, "DKIM record is incomplete"):
+        result = validate_snapshot(current, config(state_has_dns=True))
+
+        self.assertEqual(result["routing_dns_records"], 5)
+        self.assertEqual(result["routing_dns_api_records"], 4)
+        self.assertEqual(result["routing_dns_api_errors"], 0)
+
+    def test_ready_routing_with_conflicting_api_dns_response_stops(self) -> None:
+        current = snapshot()
+        routing_records = copy.deepcopy(
+            (current["routing_dns"])["record"]  # type: ignore[index]
+        )
+        conflicting_record = {
+            "type": "TXT",
+            "name": "codehawks.org",
+            "content": "v=spf1 include:other.example ~all",
+        }
+        current["routing_settings"] = {"enabled": True, "status": "ready"}
+        current["routing_dns"] = {
+            "record": [*routing_records[:-1], conflicting_record]
+        }
+        current["public_dns_records"] = [
+            *copy.deepcopy(current["dns_records"]),  # type: ignore[arg-type]
+            *routing_records,
+        ]
+
+        with self.assertRaisesRegex(PreflightError, "conflicts with public DNS"):
+            validate_snapshot(current, config(state_has_dns=True))
+
+    def test_ready_routing_with_api_reported_missing_record_stops(self) -> None:
+        current = snapshot()
+        routing_records = copy.deepcopy(
+            (current["routing_dns"])["record"]  # type: ignore[index]
+        )
+        current["routing_settings"] = {"enabled": True, "status": "ready"}
+        current["routing_dns"] = {
+            "record": [*routing_records[:3], routing_records[-1]],
+            "errors": [
+                {
+                    "code": "spf_missing",
+                    "missing": routing_records[-2],
+                }
+            ],
+        }
+        current["public_dns_records"] = [
+            *copy.deepcopy(current["dns_records"]),  # type: ignore[arg-type]
+            *routing_records,
+        ]
+
+        with self.assertRaisesRegex(PreflightError, "reports missing"):
             validate_snapshot(current, config(state_has_dns=True))
 
     def test_enabled_catch_all_stops(self) -> None:

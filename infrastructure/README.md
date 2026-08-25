@@ -203,11 +203,12 @@ The protected destination has no Terraform default and is supplied only through 
 The preflight resolves the protected MX, SPF, routing-DKIM, DMARC, and SES Easy
 DKIM records through both Cloudflare and Google DNS-over-HTTPS and stops if the
 normalized answers disagree. Once Email Routing reports `ready`, Cloudflare may
-return an empty managed-DNS list; that response is accepted only when both public
-resolvers show the exact three reviewed Cloudflare MX targets, the single reviewed
-SPF value, a nonempty Cloudflare routing-DKIM key, the reviewed DMARC value, and
-all three unchanged SES Easy DKIM CNAMEs. A partial nonempty API response still
-fails closed.
+return an empty or partial current-record list; that response is accepted only
+when both public resolvers show the exact three reviewed Cloudflare MX targets,
+the single reviewed SPF value, a nonempty Cloudflare routing-DKIM key, the
+reviewed DMARC value, and all three unchanged SES Easy DKIM CNAMEs. Every record
+the API does return must match that public routing set, and any API-reported
+missing/invalid record still fails closed.
 
 Activation is deliberately two-stage:
 
