@@ -190,7 +190,9 @@ resource "cloudflare_email_routing_dns" "contact" {
   count = var.email_routing_onboarding_enabled ? 1 : 0
 
   zone_id = var.cloudflare_zone_id
-  name    = var.domain_name
+
+  # Leave the optional name unset for zone-apex onboarding. Cloudflare treats
+  # a populated name as a subdomain selector and rejects the apex domain.
 
   lifecycle {
     prevent_destroy = true

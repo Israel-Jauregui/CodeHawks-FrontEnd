@@ -134,8 +134,12 @@ def validate_plan(plan: dict[str, Any]) -> None:
 
     if onboarding_enabled:
         dns_values = by_type["cloudflare_email_routing_dns"][0].get("values") or {}
-        if dns_values.get("zone_id") != zone_id or dns_values.get("name") != domain:
-            raise PlanError("Email Routing DNS does not target the exact protected zone/domain")
+        if dns_values.get("zone_id") != zone_id:
+            raise PlanError("Email Routing DNS does not target the exact protected zone")
+        if dns_values.get("name") is not None:
+            raise PlanError(
+                "Zone-apex Email Routing DNS must omit the optional subdomain name"
+            )
 
         address_values = by_type["cloudflare_email_routing_address"][0].get(
             "values"
