@@ -377,16 +377,20 @@ class EmailRoutingPreflightTests(unittest.TestCase):
 
     def test_ready_routing_with_clean_partial_api_dns_response_passes(self) -> None:
         current = snapshot()
-        routing_records = copy.deepcopy(
+        public_routing_records = copy.deepcopy(
             (current["routing_dns"])["record"]  # type: ignore[index]
         )
+        api_routing_records = copy.deepcopy(public_routing_records)
+        api_routing_records[0]["priority"] = 10
+        api_routing_records[1]["priority"] = 20
+        api_routing_records[2]["priority"] = 30
         current["routing_settings"] = {"enabled": True, "status": "ready"}
         current["routing_dns"] = {
-            "record": [*routing_records[:3], routing_records[-1]]
+            "record": [*api_routing_records[:3], api_routing_records[-1]]
         }
         current["public_dns_records"] = [
             *copy.deepcopy(current["dns_records"]),  # type: ignore[arg-type]
-            *routing_records,
+            *public_routing_records,
         ]
 
         result = validate_snapshot(current, config(state_has_dns=True))

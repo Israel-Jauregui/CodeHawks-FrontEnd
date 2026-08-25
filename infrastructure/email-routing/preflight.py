@@ -344,6 +344,15 @@ def _dns_key(record: dict[str, Any], domain: str) -> tuple[str, str, str, int]:
     )
 
 
+def _dns_identity(record: dict[str, Any], domain: str) -> tuple[str, str, str]:
+    record_type = str(record.get("type") or "").upper()
+    return (
+        record_type,
+        _dns_name(record.get("name"), domain),
+        _dns_content(record_type, record.get("content")),
+    )
+
+
 def _routing_dns_records(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     routing_dns = snapshot.get("routing_dns") or {}
     if isinstance(routing_dns, list):
@@ -512,8 +521,8 @@ def validate_snapshot(snapshot: dict[str, Any], config: Config) -> dict[str, Any
                 f"(codes: {', '.join(error_codes)})"
             )
         if expected_routing_records:
-            live_routing_keys = {
-                _dns_key(record, config.domain)
+            live_routing_identities = {
+                _dns_identity(record, config.domain)
                 for record in dns_records
                 if (
                     str(record.get("type") or "").upper() == "MX"
@@ -534,12 +543,29 @@ def validate_snapshot(snapshot: dict[str, Any], config: Config) -> dict[str, Any
                     )
                 )
             }
-            unexpected_routing_records = (
-                expected_routing_keys - live_routing_keys
+            expected_routing_identities = {
+                _dns_identity(record, config.domain)
+                for record in expected_routing_records
+            }
+            duplicate_api_records = (
+                len(expected_routing_identities) != len(expected_routing_records)
             )
-            if unexpected_routing_records:
+            unexpected_routing_records = (
+                expected_routing_identities - live_routing_identities
+            )
+            if duplicate_api_records or unexpected_routing_records:
+                conflict_details = []
+                if duplicate_api_records:
+                    conflict_details.append("duplicate records")
+                conflict_details.extend(
+                    f"{record_type} at {name}"
+                    for record_type, name, _content in sorted(
+                        unexpected_routing_records
+                    )
+                )
                 raise PreflightError(
-                    "Cloudflare's Email Routing DNS response conflicts with public DNS"
+                    "Cloudflare's Email Routing DNS response conflicts with public DNS "
+                    f"({'; '.join(conflict_details)})"
                 )
     else:
         if live_mx and live_mx != expected_mx:
