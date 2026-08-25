@@ -47,7 +47,7 @@ def base_plan(*, forwarding: bool = False) -> dict:
             {
                 "address": "cloudflare_email_routing_dns.contact[0]",
                 "type": "cloudflare_email_routing_dns",
-                "values": {"name": "codehawks.org", "zone_id": "b" * 32},
+                "values": {"name": None, "zone_id": "b" * 32},
             },
             {
                 "address": "cloudflare_email_routing_address.contact[0]",
@@ -101,6 +101,18 @@ class PlanInvariantTests(unittest.TestCase):
 
     def test_accepts_onboarding_without_a_rule(self) -> None:
         self.validate(base_plan())
+
+    def test_rejects_apex_domain_sent_as_subdomain_name(self) -> None:
+        plan = copy.deepcopy(base_plan())
+        resources = plan["planned_values"]["root_module"]["resources"]
+        dns = next(
+            resource
+            for resource in resources
+            if resource["type"] == "cloudflare_email_routing_dns"
+        )
+        dns["values"]["name"] = "codehawks.org"
+        with self.assertRaisesRegex(check_plan.PlanError, "omit the optional"):
+            self.validate(plan)
 
     def test_accepts_one_exact_verified_stage_rule(self) -> None:
         self.validate(base_plan(forwarding=True), forwarding=True)
