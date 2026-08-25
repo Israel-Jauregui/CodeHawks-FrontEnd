@@ -384,6 +384,12 @@ class EmailRoutingPreflightTests(unittest.TestCase):
         api_routing_records[0]["priority"] = 10
         api_routing_records[1]["priority"] = 20
         api_routing_records[2]["priority"] = 30
+        api_routing_records[-2]["content"] = (
+            '"v=spf1 include:_spf.mx.cloudflare.net " "~all"'
+        )
+        api_routing_records[-1]["content"] = (
+            '"v=DKIM1; h=sha256; k=rsa; p=exa" "mple"'
+        )
         current["routing_settings"] = {"enabled": True, "status": "ready"}
         current["routing_dns"] = {
             "record": [*api_routing_records[:3], api_routing_records[-1]]

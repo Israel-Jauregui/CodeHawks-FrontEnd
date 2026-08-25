@@ -207,16 +207,18 @@ class PublicDnsClient:
         return resolver_records[0]
 
 
-def _txt_answer(value: Any, resolver: str) -> str:
+def _normalize_txt(value: Any, source: str) -> str:
     content = str(value or "").strip()
     if not content.startswith('"'):
         return content
     try:
         return "".join(shlex.split(content))
     except ValueError as error:
-        raise PreflightError(
-            f"{resolver} public DNS returned a malformed TXT record"
-        ) from error
+        raise PreflightError(f"{source} returned a malformed TXT record") from error
+
+
+def _txt_answer(value: Any, resolver: str) -> str:
+    return _normalize_txt(value, f"{resolver} public DNS")
 
 
 def _public_dns_answers(
@@ -330,6 +332,8 @@ def _dns_content(record_type: str, value: Any) -> str:
     content = str(value or "").strip()
     if record_type in {"MX", "CNAME"}:
         return content.lower().rstrip(".")
+    if record_type == "TXT":
+        return _normalize_txt(content, "DNS API")
     return content
 
 
