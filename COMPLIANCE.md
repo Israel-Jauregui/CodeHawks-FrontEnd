@@ -1,6 +1,6 @@
 # CodeHawks compliance and production-readiness review
 
-Reviewed: August 24, 2026
+Reviewed: August 26, 2026
 
 Scope: `CodeHawks-FrontEnd` and `CodeHawks-Backend`. The iPad project is intentionally out of scope. This is an engineering compliance review, not a legal certification.
 
@@ -54,80 +54,50 @@ Status labels:
 - Routing and infrastructure checks: `infrastructure/functions/request-router.js.tftpl`, `infrastructure/functions/request-router.test.cjs`, `infrastructure/bootstrap/PERMISSIONS.md`, and `infrastructure/bootstrap/check_policy_invariants.py`.
 - Member privacy controls: `src/components/MembersDirectory.tsx`, `src/components/browser/modules/ProfileModule.tsx`, and the backend `/v1/directory/members`, `/v1/me/export`, `/v1/me/avatar`, and `/v1/me` deletion handlers.
 
-## Next owner task: activate `contact@codehawks.org` forwarding
+## `contact@codehawks.org` forwarding activation record
 
-Decision updated August 24, 2026: the owner selected `contact@codehawks.org` as the single public privacy/support and newsletter Reply-To address. The protected backend environment value was added and the reviewed backend apply deployed that Reply-To configuration; the website and Cloudflare Email Routing changes remain undeployed. Read-only checks against Cloudflare and Google public resolvers found no MX or apex SPF record, so incoming messages cannot currently be delivered.
+Decision updated August 24, 2026: the owner selected `contact@codehawks.org` as the single public privacy/support and newsletter Reply-To address. Cloudflare Email Routing handles receive-only forwarding for that exact address. Amazon SES remains the outbound provider for `noreply@codehawks.org` and newsletters.
 
-Desired receive-only behavior:
+- **Status/result:** Active. The protected onboarding apply completed on August 25, 2026 in run `32868244202`, after the owner verified the protected UNG destination. The final protected apply completed at `2026-08-25T16:51:56Z` in run `32874388272` and created only `cloudflare_email_routing_rule.contact[0]`: `1 added, 0 changed, 0 destroyed`.
+- **Reviewed-plan provenance:** Final plan run `32874061178`, commit `e604be74e5390dfedd1a96cfc5f6b761a974f5f4`, approved bundle SHA-256 `f9f8686e57a685fabff4270793a8d50191bc7c66c61e7424582c70a18256f25d`. The apply workflow verified that exact run, commit, and digest and did not create a replacement plan.
+- **Terraform/live scope:** State serial 13 reports one verified destination, Email Routing `ready`, and one enabled rule whose literal matcher is exactly `contact@codehawks.org` with one `forward` action. No catch-all, email storage, mail Worker, Cloudflare outbound sending, or send-as behavior was enabled.
+- **Protected value:** The approved destination is stored only in the `infrastructure-production` environment secret `EMAIL_FORWARDING_DESTINATION`. It has no Terraform default and is not emitted as an output. The Cloudflare credential is a scoped API token, not a Global API Key; its minimum permissions are documented in `infrastructure/README.md`.
+- **Human delivery evidence (August 26, 2026):** The owner sent from an unrelated external mailbox and confirmed delivery from `contact@codehawks.org` to the protected UNG inbox. The owner also tested an arbitrary unconfigured `@codehawks.org` address and confirmed that it did not forward. No message content or credential was recorded.
+- **Reply-origin evidence (August 26, 2026):** The owner confirmed that a reply sent from the UNG inbox visibly appeared at the external mailbox with `ijaur3627@ung.edu` as `From`. The system intentionally does not provide `send as contact@codehawks.org`.
+- **Post-apply health:** Cloudflare and Google public DNS agreed on the three Cloudflare MX records, one apex SPF record, the Email Routing DKIM record, the unchanged monitoring-only DMARC record, and all three SES Easy DKIM CNAMEs. SES reported identity verification and DKIM `SUCCESS` with signing enabled. The newsletter worker remained active with `CodeHawks <noreply@codehawks.org>` as sender and `contact@codehawks.org` as Reply-To. The apex site, `www` redirect, `/members`, 404 behavior, and security headers remained healthy.
+- **Operational owner:** The CodeHawks repository/domain owner and holder of the protected UNG destination mailbox owns the Cloudflare destination/rule lifecycle, protected-environment approvals, periodic external-delivery checks, and officer handoff until that responsibility is formally reassigned.
+- **Routine rollback:** Set protected `EMAIL_FORWARDING_RULE_ENABLED=false`, create and review a new plan that removes only `cloudflare_email_routing_rule.contact[0]`, and apply only that exact approved bundle. Leave `EMAIL_ROUTING_ONBOARDING_ENABLED=true`, the verified destination, and Cloudflare-managed MX/SPF/DKIM records intact. Removing Email Routing DNS is a separate destructive decision blocked by `prevent_destroy` and is not part of routine rollback.
+- **Destination rotation:** Disable/remove the exact rule through the reviewed workflow, change the protected destination secret, apply the destination change, wait for the new owner to complete Cloudflare verification, and only then review and apply a plan that recreates the exact rule.
 
-- Forward mail addressed exactly to `contact@codehawks.org` to the owner-selected protected destination using Cloudflare Email Routing. The approved initial destination is stored only in the protected `EMAIL_FORWARDING_DESTINATION` environment secret, not a reusable Terraform default.
-- Do not enable a catch-all address, email storage, a mail-processing Worker, or outbound sending through Cloudflare.
-- Normal replies from the forwarded message will be sent from the officer's UNG account. This task does not authorize or claim “send as `contact@codehawks.org`” functionality.
-- Keep the backend's Amazon SES identity, Easy DKIM records, `noreply@codehawks.org` sender, newsletter `Reply-To`, and monitoring-only DMARC policy intact.
+Acceptance status:
 
-Implementation and approval sequence:
+- **Passed:** External mail to `contact@codehawks.org` reaches the protected owner-selected UNG destination.
+- **Passed:** Arbitrary, unconfigured `@codehawks.org` addresses do not forward.
+- **Passed:** Replies visibly originate from the officer's UNG account.
+- **Passed:** Website, SES newsletter configuration, Easy DKIM, SPF, and DMARC remained healthy after activation.
+- **Passed:** The exact rule and destination can be disabled or rotated through separately reviewed owner-approved changes.
 
-1. Perform a read-only live preflight of Cloudflare Email Routing, current MX/TXT/DKIM records, Terraform state, and the reviewed Terraform plan. Stop on any existing mail provider, duplicate SPF record, unexpected DNS replacement/deletion, or account/zone mismatch.
-2. Prefer the existing frontend infrastructure state for Cloudflare routing resources. Add minimally scoped, non-secret configuration for the Cloudflare account ID and a sensitive/environment-supplied forwarding destination; do not hard-code personal addresses into reusable Terraform defaults.
-3. Add the verified destination and exact-address routing rule using supported Cloudflare provider resources. The Cloudflare token will need the minimum Email Routing address/rule permissions in addition to its existing zone/DNS permissions; document the exact permissions and do not use a global API key.
-4. Cloudflare requires the destination owner to open a verification email sent to `ijaur3627@ung.edu`. Do not mark or force the destination as verified in code. Keep the forwarding rule disabled until Cloudflare reports the destination verified.
-5. Cloudflare Email Routing domain onboarding creates or locks its required root MX, SPF, and routing-DKIM records. Treat onboarding as a separate, human-approved step and document how those Cloudflare-managed records coexist with Terraform. Do not create duplicate SPF records or overwrite the SES Easy DKIM/DMARC records.
-6. After destination verification and DNS review, run a second owner-approved plan/apply to create and enable only the exact `contact@codehawks.org` rule.
-7. Test from an unrelated external mailbox. Confirm delivery to the UNG inbox, preservation of the original sender and reply target, correct Cloudflare activity-log status, and continued SES/DKIM/DMARC health. Do not test from the same destination mailbox because some providers suppress self-forwarded messages.
-8. Update this section and the infrastructure email documentation with the activation date, verified destination owner, rollback steps, and operational owner. Never commit Cloudflare credentials or message contents.
+## Consolidated rollout status and remaining owner tasks
 
-Activation record (pending):
+The production rollout order was preserved:
 
-- **Status/result:** The AWS-owner bootstrap migration and reviewed backend apply are complete. Backend run `32774467048` applied the approved `2 added, 6 changed, 0 destroyed` plan, including newsletter `Reply-To: contact@codehawks.org`; SES identity verification and Easy DKIM report healthy. Frontend Terraform, workflow, preflight, plan-invariant, and website changes are prepared but not deployed. Forwarding is not active, no Cloudflare destination-verification message has been triggered, and no frontend/domain plan has been applied.
-- **Read-only evidence (August 24, 2026):** Cloudflare and Google public resolvers return no apex MX, no apex SPF, and no live DMARC record; the only apex TXT value is the existing Google site-verification token. All three deployed SES Easy DKIM CNAMEs still resolve to their matching `dkim.amazonses.com` targets, and both apex and `www` return HTTP 200 from the existing CloudFront/S3 site. The protected workflow must still prove token status, account/zone ownership, Email Routing status, catch-all/rules/destinations, and current Terraform-state ownership before it is allowed to produce the first exact plan.
-- **Protected value:** Store the approved initial destination `ijaur3627@ung.edu` only as the `infrastructure-production` environment secret `EMAIL_FORWARDING_DESTINATION`. It has no Terraform default and is never emitted as an output.
-- **Activation date and verification evidence:** Pending the two separately reviewed onboarding/rule plans, explicit approvals, mailbox verification, and unrelated-sender tests. Record the UTC activation time and non-message-content evidence here after completion.
-- **Operational owner:** The CodeHawks repository/domain owner and holder of the protected destination mailbox until a documented club-owner handoff replaces them.
-- **Rollback:** Run a reviewed plan that removes only `cloudflare_email_routing_rule.contact[0]`, then apply that exact approved bundle. Leave the verified destination and Cloudflare-managed Email Routing DNS intact for rapid recovery. Removing routing DNS is a separate destructive change blocked by `prevent_destroy` and requires a new owner decision after confirming no inbound dependency remains.
+1. **Completed:** The MFA-protected AWS owner updated `codehawks-bootstrap`. The legacy routine AWS role did not install or widen its own permissions.
+2. **Completed:** Reviewed backend apply run `32774467048` deployed the compliance/backend changes and newsletter `Reply-To: contact@codehawks.org`.
+3. **Completed:** SES Easy DKIM tokens were handed from backend state to the domain-owning frontend state without replacing the SES identity.
+4. **Completed:** The reviewed frontend/domain infrastructure and website were deployed.
+5. **Completed:** SES, DKIM, website, and forwarding health were checked after activation; the human delivery, no-catch-all, and visible UNG reply-origin tests passed.
+6. **Human-owned future action:** Request SES production access if newsletter sending must leave the SES sandbox. This account-level request is intentionally not automated and must not be submitted by the routine deployment role.
 
-Acceptance criteria:
+Remaining owner/compliance work outside this forwarding activation:
 
-- External mail to `contact@codehawks.org` arrives at the protected owner-selected UNG destination.
-- Mail to arbitrary, unconfigured `@codehawks.org` addresses is not forwarded.
-- Replies clearly originate from the officer's UNG account.
-- Website, SES newsletter sending, Easy DKIM, SPF, and DMARC checks remain healthy.
-- The destination can be removed or replaced through a reviewed owner-approved change when officers change.
+- Confirm the final registered operator name and any physical/registered address required by UNG or applicable law.
+- Establish a monitored DMARC aggregate-report mailbox before proposing a move from `p=none` to enforcement.
+- Keep the protected destination and operational owner current when club officers change.
 
-## Consolidated next-agent execution task
-
-Use `/Users/israeljauregui/Desktop/ClubWebsiteAWS/Migration` as the workspace. It contains two repositories, `CodeHawks-FrontEnd` and `CodeHawks-Backend`, with intentional uncommitted work from this compliance implementation. Do not reset, discard, overwrite, stash, or broadly reformat those changes. Preserve unrelated pre-existing changes, including the user's instruction/security files.
-
-Phase 1 — understand and protect the existing work:
-
-1. Read this document, both repositories' `AGENTS.md` files, both READMEs, the deployment/email documentation, and `CodeHawks-FrontEnd/infrastructure/bootstrap/PERMISSIONS.md` before changing code or infrastructure.
-2. Report the Git status and summarize the current frontend, backend, infrastructure, and untracked changes in plain English. Distinguish pre-existing user files from implementation changes when the history makes that possible.
-3. Do not redo the compliance implementation from scratch. Review the existing implementation and identify only concrete regressions, integration gaps, or unfinished owner tasks.
-
-Phase 2 — reproduce the completed validation gate:
-
-1. Run the frontend TypeScript check, lint, behavioral tests, production build, dependency audit, CloudFront router test, Terraform formatting/validation, IAM invariant checker, CloudFormation lint, workflow/shell syntax checks, secret-pattern scan, and `git diff --check`.
-2. Run the backend full check (typecheck, lint, build, and tests), dependency audit, Terraform formatting/validation, IAM invariant checker, CloudFormation lint, secret-pattern scan, and `git diff --check`.
-3. Report failures with exact evidence and fix only failures caused by the current implementation. Do not hide warnings; the known frontend main-chunk size warning is non-blocking unless it becomes a failure or materially worsens.
-
-Phase 3 — implement the receive-only forwarding task above:
-
-1. Reconfirm the live mail/DNS preflight and implement only `contact@codehawks.org` to the protected owner-selected UNG destination through Cloudflare Email Routing.
-2. Preserve the website and Amazon SES configuration. Do not enable a catch-all, storage, mail Worker, Cloudflare outbound sending, or send-as functionality.
-3. Keep personal destinations out of reusable Terraform defaults and secrets out of the repository. Update the protected GitHub environment/configuration documentation and minimally scoped Cloudflare token requirements.
-4. Stop for the user to click Cloudflare's destination-verification email. Do not bypass verification or claim the address is verified.
-5. Before any live mutation, show the exact reviewed Terraform plan and explain every DNS/routing change in plain English. Do not apply until the user explicitly approves that plan.
-6. After approval, use the protected owner-reviewed workflow. Test with an unrelated external sender and verify the acceptance criteria above. Record the outcome and rollback procedure in this document.
-
-Phase 4 — handoff and deployment safety:
-
-1. Re-run the proportionate validation gate after forwarding changes and report the results.
-2. Prepare a sensible commit plan separating frontend/application, backend/application, infrastructure/security, tests/documentation, and forwarding work where practical. Do not commit, push, open a pull request, or discard changes unless the user authorizes it.
-3. Explain the one-time AWS-owner bootstrap migration before proposing any broader production deployment. The legacy routine infrastructure role must not install its own permissions fix.
-4. For an approved full rollout, the required order is owner bootstrap migration, reviewed backend apply, SES DKIM-token handoff, reviewed frontend/domain apply, verification of SES/DKIM and forwarding health, then the human-owned SES production-access request. Never silently re-plan after approval.
-5. Do not deploy, modify AWS, change DNS, send email, or perform another external mutation outside the exact action and approval currently given by the user.
+Future infrastructure changes must continue to use the protected plan/apply workflow. Approval applies only to the displayed plan's run, commit, and bundle digest; never create or apply a different plan silently. Do not let the legacy routine role modify its own bootstrap permissions.
 
 ## Verification and deployment gate
 
-Local verification covers frontend TypeScript, JavaScript linting, behavioral tests, production build, backend type/lint/tests/build, dependency advisories, Terraform format/validation, CloudFormation lint, IAM invariants, CloudFront routing invariants, workflow syntax, and whitespace checks.
+The full pre-deployment validation covered frontend TypeScript, lint, behavioral tests, production build, dependency audit, CloudFront routing, Terraform formatting/validation, IAM invariants, CloudFormation lint, workflow/shell syntax, secret scanning, and diff checks, plus the corresponding backend full check, audit, Terraform, IAM, CloudFormation, secret, and diff checks. Proportionate live read-only checks after activation covered Terraform state, dual-resolver mail DNS, SES identity/DKIM, newsletter configuration, website routes, and security headers.
 
-No Terraform plan/apply/destroy, website deployment, DNS change, email send, or other cloud mutation was performed in this review. Follow the owner actions above and the protected workflow instructions before making these controls live.
+This closeout update is documentation-only. It does not authorize or perform another Terraform plan/apply, AWS or Cloudflare mutation, DNS change, email send, commit, push, or pull request.
