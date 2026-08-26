@@ -17,7 +17,7 @@ export const HOME_HERO_ART = [
   SITE_IDENTITY.registeredOrganizationName,
 ];
 
-export const HOME_HERO_TAGLINE = 'Software Engineering & Product Development @ UNG';
+export const HOME_HERO_TAGLINE = 'Software Engineering & Product Management @ UNG';
 
 export default function HomeModule() {
   return (

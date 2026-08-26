@@ -16,6 +16,7 @@ describe('homepage club branding', () => {
     expect(screen.getByRole('button', { name: 'ADC Website' })).toBeInTheDocument();
     expect(screen.getByText('App Development Club at University of North Georgia')).toHaveClass('title-bar-text');
     expect(HOME_HERO_ART.at(-1)).toBe('Application Development Club');
+    expect(HOME_HERO_TAGLINE).toBe('Software Engineering & Product Management @ UNG');
     expect(screen.getByText(HOME_HERO_TAGLINE)).toHaveClass('hero-tagline');
     expect(screen.getByRole('button', { name: 'Get Started' })).toHaveClass('cta-button');
     expect(screen.queryByRole('link', { name: 'Get Started' })).not.toBeInTheDocument();
