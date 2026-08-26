@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-export type BrowserRoute = 'home' | 'projects' | 'team' | 'profile' | 'notifications' | 'event-manager';
+export type BrowserRoute = 'home' | 'projects' | 'team' | 'members' | 'profile' | 'notifications' | 'event-manager';
 
 interface BrowserNavigationState {
   currentRoute: BrowserRoute;
@@ -26,6 +26,7 @@ const ROUTE_PATH_MAP: Record<BrowserRoute, string> = {
   home: '/',
   projects: '/projects',
   team: '/team',
+  members: '/members',
   profile: '/profile',
   notifications: '/notifications',
   'event-manager': '/manage/events',
@@ -35,6 +36,7 @@ const ROUTE_ADDRESS_MAP: Record<BrowserRoute, string> = {
   home: 'https://codehawks.org/',
   projects: 'https://codehawks.org/projects',
   team: 'https://codehawks.org/team',
+  members: 'https://codehawks.org/members',
   profile: 'https://codehawks.org/profile',
   notifications: 'https://codehawks.org/notifications',
   'event-manager': 'https://codehawks.org/manage/events',
@@ -44,6 +46,7 @@ function isValidBrowserRoute(value: unknown): value is BrowserRoute {
   return value === 'home'
     || value === 'projects'
     || value === 'team'
+    || value === 'members'
     || value === 'profile'
     || value === 'notifications'
     || value === 'event-manager';

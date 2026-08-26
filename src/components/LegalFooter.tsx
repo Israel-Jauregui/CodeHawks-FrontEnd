@@ -1,4 +1,4 @@
-import { ORGANIZATION_TRANSITION_NOTICE, SITE_IDENTITY } from '../constants/site';
+import { ORGANIZATION_IDENTITY_NOTICE, SITE_IDENTITY } from '../constants/site';
 import './LegalFooter.css';
 
 interface LegalFooterProps {
@@ -28,7 +28,7 @@ export default function LegalFooter({ compact = false }: LegalFooterProps) {
         <a href="/members">Members</a>
         {legalLinks.map((link) => <a key={link.href} href={link.href}>{link.label}</a>)}
       </nav>
-      <p>{ORGANIZATION_TRANSITION_NOTICE}</p>
+      <p>{ORGANIZATION_IDENTITY_NOTICE}</p>
       <p>
         Questions? Email <a href={`mailto:${SITE_IDENTITY.supportEmail}`}>{SITE_IDENTITY.supportEmail}</a>.
       </p>

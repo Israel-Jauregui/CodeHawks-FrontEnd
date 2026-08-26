@@ -66,7 +66,7 @@ const EASTERN_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
  *   ┌─── .xp-desktop (fills viewport) ─────────────────────────┐
  *   │                                                           │
  *   │  ┌── .desktop-icons ──┐                                   │
- *   │  │ [CodeHawks Website]│   ┌── .window (conditional) ──┐  │
+ *   │  │ [App Development Club Website] │   ┌── .window (conditional) ──┐  │
  *   │  │ [Projects]         │   │ TopAppBar (title bar +     │  │
  *   │  │ [Hacklonega]       │   │   toolbars)                │  │
  *   │  │                    │   │ Window body (sections)     │  │
@@ -86,6 +86,7 @@ const PAGE_METADATA: Record<BrowserRoute, { title: string; description: string; 
   },
   projects: { title: 'Projects', description: 'Browse public CodeHawks software projects.', path: '/projects' },
   team: { title: 'Teams', description: 'Browse public CodeHawks project, study, and competition teams.', path: '/team' },
+  members: { title: 'Members', description: 'Browse CodeHawks members who opted into the public member directory.', path: '/members' },
   profile: { title: 'Profile', description: 'Manage your private CodeHawks member profile and privacy choices.', path: '/profile', noIndex: true },
   notifications: { title: 'Notifications', description: 'Review your CodeHawks member notifications.', path: '/notifications', noIndex: true },
   'event-manager': { title: 'Event Manager', description: 'Manage CodeHawks club events.', path: '/manage/events', noIndex: true },
@@ -94,7 +95,7 @@ const PAGE_METADATA: Record<BrowserRoute, { title: string; description: string; 
 export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => {
   const DESKTOP_WINDOW_ORDER: DesktopWindowId[] = ['browser', 'cwInfo', 'hacklonega'];
   const WINDOW_DISPLAY_NAMES: Record<DesktopWindowId, string> = {
-    browser: `${SITE_IDENTITY.publicName} Website`,
+    browser: `${SITE_IDENTITY.currentClubName} Website`,
     cwInfo: 'Coding Warriors',
     hacklonega: 'Hacklonega',
   };
@@ -120,7 +121,7 @@ export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => 
   const startMenuLinks = [
     {
       id: 'adc-connect',
-      label: SITE_IDENTITY.registeredOrganizationName,
+      label: SITE_IDENTITY.currentClubName,
       href: 'https://connect.ung.edu/organization/app-development-club-of-ung--dah-',
       iconType: 'club',
     },
@@ -576,7 +577,7 @@ export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => 
   const desktopIcons = [
     {
       id: 'adc-website',
-      label: `${SITE_IDENTITY.publicName} Website`,
+      label: `${SITE_IDENTITY.currentClubName} Website`,
       iconType: 'globe' as const,
       onActivate: () => launchBrowserWithRoute('home'),
     },

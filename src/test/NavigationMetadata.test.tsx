@@ -38,6 +38,17 @@ describe('route history and metadata', () => {
     expect(result.current.canGoForward).toBe(true);
   });
 
+  it('treats the public Members directory as an in-browser route', () => {
+    const { result } = renderHook(() => useBrowserNavigation('home'));
+
+    act(() => result.current.navigateToRoute('members'));
+
+    expect(result.current.currentRoute).toBe('members');
+    expect(result.current.currentAddress).toBe('https://codehawks.org/members');
+    expect(window.location.pathname).toBe('/members');
+    expect(result.current.canGoBack).toBe(true);
+  });
+
   it('updates canonical, social, and indexing metadata when page state changes', async () => {
     const { rerender } = renderHook(
       ({ path, noIndex }) => usePageMetadata({

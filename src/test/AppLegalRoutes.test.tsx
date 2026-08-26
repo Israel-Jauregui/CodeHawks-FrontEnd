@@ -11,7 +11,10 @@ describe('legal route rendering', () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeInTheDocument();
-    expect(screen.getByRole('note')).toHaveTextContent('Application Development Club');
+    expect(screen.getByRole('note')).toHaveTextContent(
+      'CodeHawks is our public-facing name; App Development Club is our internal name.',
+    );
+    expect(screen.getByRole('note')).not.toHaveTextContent('still being finalized');
     expect(screen.getByRole('link', { name: 'Vendors and Service Providers page' })).toHaveAttribute(
       'href',
       '/subprocessors',

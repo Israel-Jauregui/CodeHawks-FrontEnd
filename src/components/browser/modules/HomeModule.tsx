@@ -24,7 +24,7 @@ export default function HomeModule() {
         <div className="window terminal-window">
           <div className="title-bar">
             <div className="title-bar-text">
-              {SITE_IDENTITY.publicName}
+              {SITE_IDENTITY.currentClubName}
             </div>
           </div>
 
@@ -51,7 +51,7 @@ export default function HomeModule() {
         <fieldset>
           <legend>Welcome to {SITE_IDENTITY.publicName}</legend>
           <p className="lead">
-            Welcome to {SITE_IDENTITY.publicName}, the student organization currently registered at {SITE_IDENTITY.universityName} as the {SITE_IDENTITY.registeredOrganizationName}. We meet to learn, build projects, and connect with others who love technology. Everyone with an eligible @ung.edu account is welcome; no experience is needed.
+            Welcome to {SITE_IDENTITY.publicName}, our public-facing name for the {SITE_IDENTITY.currentClubName} at {SITE_IDENTITY.universityName}. We meet to learn, build projects, and connect with others who love technology. Everyone with an eligible @ung.edu account is welcome; no experience is needed.
           </p>
         </fieldset>
       </section>
@@ -125,14 +125,17 @@ export default function HomeModule() {
           <p>
             Join us on UNG Connect to stay up to date with our meetings, events, and announcements. It&apos;s the best way to get involved and never miss out!
           </p>
-          <a
+          <button
+            type="button"
             className="cta-button"
-            href="https://connect.ung.edu/organization/app-development-club-of-ung--dah-"
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={() => window.open(
+              'https://connect.ung.edu/organization/app-development-club-of-ung--dah-',
+              '_blank',
+              'noopener,noreferrer',
+            )}
           >
             Get Started
-          </a>
+          </button>
         </fieldset>
       </section>
     </>

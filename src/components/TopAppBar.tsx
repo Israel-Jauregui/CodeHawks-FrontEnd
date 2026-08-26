@@ -33,7 +33,7 @@ import './TopAppBar.css';
  *
  * LAYOUT (IE7 browser metaphor, XP grey chrome):
  *   ┌──────────────────────────────────────────────────────────────────────┐
- *   │ [title-bar] University of North Georgia   [Join Now] [_] [□] [X]   │
+ *   │ [title-bar] App Development Club at UNG  [Join Now] [_] [□] [X]   │
  *   ├──────────────────────────────────────────────────────────────────────┤
  *   │ [◄ Back▾][►] [✕][↻][⌂][⌕][☆][⧖] │ Home About Events ... Contact  │
  *   ├──────────────────────────────────────────────────────────────────────┤
@@ -87,7 +87,7 @@ interface TopAppBarProps {
 }
 
 export const TopAppBar: React.FC<TopAppBarProps> = ({
-  title = `${SITE_IDENTITY.publicName} at ${SITE_IDENTITY.universityName}`,
+  title = `${SITE_IDENTITY.currentClubName} at ${SITE_IDENTITY.universityName}`,
   onClose,
   onMinimize,
   onMaximize,
@@ -130,7 +130,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
     { key: 'events', label: 'Events', onClick: () => onNavigateSection?.('events') },
     { key: 'projects', label: 'Projects', onClick: () => onNavigateRoute?.('projects') },
     { key: 'team', label: 'Team', onClick: () => onNavigateRoute?.('team') },
-    { key: 'members', label: 'Members', onClick: () => window.location.assign('/members') },
+    { key: 'members', label: 'Members', onClick: () => onNavigateRoute?.('members') },
     { key: 'contact', label: 'Contact', onClick: () => onNavigateSection?.('contact') },
   ];
 
