@@ -1,6 +1,7 @@
 export const SITE_IDENTITY = {
   publicName: 'CodeHawks',
   currentClubName: 'App Development Club',
+  websiteShortcutName: 'ADC Website',
   registeredOrganizationName: 'Application Development Club',
   universityName: 'University of North Georgia',
   canonicalOrigin: 'https://codehawks.org',

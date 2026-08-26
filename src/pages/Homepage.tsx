@@ -66,7 +66,7 @@ const EASTERN_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
  *   ┌─── .xp-desktop (fills viewport) ─────────────────────────┐
  *   │                                                           │
  *   │  ┌── .desktop-icons ──┐                                   │
- *   │  │ [App Development Club Website] │   ┌── .window (conditional) ──┐  │
+ *   │  │ [ADC Website]     │   ┌── .window (conditional) ──┐  │
  *   │  │ [Projects]         │   │ TopAppBar (title bar +     │  │
  *   │  │ [Hacklonega]       │   │   toolbars)                │  │
  *   │  │                    │   │ Window body (sections)     │  │
@@ -95,7 +95,7 @@ const PAGE_METADATA: Record<BrowserRoute, { title: string; description: string; 
 export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => {
   const DESKTOP_WINDOW_ORDER: DesktopWindowId[] = ['browser', 'cwInfo', 'hacklonega'];
   const WINDOW_DISPLAY_NAMES: Record<DesktopWindowId, string> = {
-    browser: `${SITE_IDENTITY.currentClubName} Website`,
+    browser: SITE_IDENTITY.websiteShortcutName,
     cwInfo: 'Coding Warriors',
     hacklonega: 'Hacklonega',
   };
@@ -577,7 +577,7 @@ export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => 
   const desktopIcons = [
     {
       id: 'adc-website',
-      label: `${SITE_IDENTITY.currentClubName} Website`,
+      label: SITE_IDENTITY.websiteShortcutName,
       iconType: 'globe' as const,
       onActivate: () => launchBrowserWithRoute('home'),
     },

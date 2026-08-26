@@ -11,7 +11,8 @@ describe('homepage club branding', () => {
       </UnavailableAuthProvider>,
     );
 
-    expect(screen.getByRole('button', { name: 'Open App Development Club Website' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open ADC Website' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ADC Website' })).toBeInTheDocument();
     expect(screen.getByText('App Development Club at University of North Georgia')).toHaveClass('title-bar-text');
     expect(screen.getByRole('button', { name: 'Get Started' })).toHaveClass('cta-button');
     expect(screen.queryByRole('link', { name: 'Get Started' })).not.toBeInTheDocument();
