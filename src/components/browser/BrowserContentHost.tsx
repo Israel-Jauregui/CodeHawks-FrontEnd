@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { ResourceType } from '../../types/clubData';
+import MembersDirectory from '../MembersDirectory';
 import BrowserErrorBoundary from './BrowserErrorBoundary';
 import type { BrowserRoute } from './hooks/useBrowserNavigation';
 import HomeModule from './modules/HomeModule';
@@ -13,6 +14,7 @@ const ROUTE_HEADINGS: Record<BrowserRoute, string> = {
   home: 'CodeHawks at the University of North Georgia',
   projects: 'CodeHawks projects',
   team: 'CodeHawks teams',
+  members: 'CodeHawks public members',
   profile: 'Your CodeHawks profile',
   notifications: 'Your CodeHawks notifications',
   'event-manager': 'CodeHawks event manager',
@@ -50,6 +52,7 @@ export default function BrowserContentHost({
         {route === 'home' && <HomeModule />}
         {route === 'projects' && <ProjectsModule />}
         {route === 'team' && <TeamModule />}
+        {route === 'members' && <MembersDirectory />}
         {route === 'profile' && <ProfileModule />}
         {route === 'notifications' && <NotificationsModule onOpenResource={openResource} />}
         {route === 'event-manager' && <EventManagerModule />}

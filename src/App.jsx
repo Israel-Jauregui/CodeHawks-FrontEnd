@@ -1,7 +1,6 @@
 import './App.css'
 import Homepage from './pages/Homepage'
 import AccessibilityPage from './pages/AccessibilityPage'
-import MembersPage from './pages/MembersPage'
 import NotFoundPage from './pages/NotFoundPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import SubprocessorsPage from './pages/SubprocessorsPage'
@@ -18,6 +17,7 @@ function App() {
     '/home': 'home',
     '/projects': 'projects',
     '/team': 'team',
+    '/members': 'members',
     '/profile': 'profile',
     '/notifications': 'notifications',
     '/manage/events': 'event-manager',
@@ -26,8 +26,6 @@ function App() {
   let page
   if (Object.prototype.hasOwnProperty.call(homepageRoutes, pathname)) {
     page = <Homepage initialRoute={homepageRoutes[pathname]} />
-  } else if (pathname === '/members') {
-    page = <MembersPage />
   } else if (pathname === '/privacy') {
     page = <PrivacyPolicyPage />
   } else if (pathname === '/terms') {

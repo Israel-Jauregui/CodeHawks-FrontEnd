@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ORGANIZATION_TRANSITION_NOTICE, SITE_IDENTITY } from '../constants/site';
+import { ORGANIZATION_IDENTITY_NOTICE, SITE_IDENTITY } from '../constants/site';
 import LegalFooter from './LegalFooter';
 import './LegalPageLayout.css';
 
@@ -45,7 +45,7 @@ export default function LegalPageLayout({
           {showUpdated && <p className="legal-page-content__updated"><strong>Effective and last updated:</strong> {updated}</p>}
           {showIdentityNotice && (
             <div className="legal-page-content__notice" role="note">
-              <strong>Organization identity notice.</strong> {ORGANIZATION_TRANSITION_NOTICE}
+              <strong>Organization identity notice.</strong> {ORGANIZATION_IDENTITY_NOTICE}
             </div>
           )}
           {children}

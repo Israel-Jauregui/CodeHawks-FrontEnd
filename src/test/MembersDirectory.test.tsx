@@ -1,7 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { UnavailableAuthProvider } from '../auth/AuthContext';
 import MembersDirectory from '../components/MembersDirectory';
+import App from '../App';
 
 const directoryMocks = vi.hoisted(() => ({
   getPublicDirectoryMembers: vi.fn(),
@@ -53,5 +55,23 @@ describe('public member directory', () => {
 
     const cardList = screen.getByRole('list', { name: 'Opted-in public member profiles' });
     expect(cardList.children).toHaveLength(1);
+  });
+
+  it('renders the /members route inside the XP browser window', async () => {
+    window.history.replaceState({}, '', '/members');
+
+    render(
+      <UnavailableAuthProvider>
+        <App />
+      </UnavailableAuthProvider>,
+    );
+
+    const searchbox = await screen.findByRole('searchbox', { name: 'Search public members' });
+    const browserWindow = document.querySelector('.homepage-window');
+
+    expect(browserWindow).not.toBeNull();
+    expect(browserWindow).toContainElement(searchbox);
+    expect(screen.getAllByText('https://codehawks.org/members').length).toBeGreaterThan(0);
+    expect(document.querySelector('.legal-page-shell')).not.toBeInTheDocument();
   });
 });
