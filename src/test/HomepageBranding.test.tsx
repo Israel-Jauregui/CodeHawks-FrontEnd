@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { UnavailableAuthProvider } from '../auth/AuthContext';
+import { HOME_HERO_ART, HOME_HERO_TAGLINE } from '../components/browser/modules/HomeModule';
 import Homepage from '../pages/Homepage';
 
 describe('homepage club branding', () => {
@@ -14,6 +15,8 @@ describe('homepage club branding', () => {
     expect(screen.getByRole('button', { name: 'Open ADC Website' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'ADC Website' })).toBeInTheDocument();
     expect(screen.getByText('App Development Club at University of North Georgia')).toHaveClass('title-bar-text');
+    expect(HOME_HERO_ART.at(-1)).toBe('Application Development Club');
+    expect(screen.getByText(HOME_HERO_TAGLINE)).toHaveClass('hero-tagline');
     expect(screen.getByRole('button', { name: 'Get Started' })).toHaveClass('cta-button');
     expect(screen.queryByRole('link', { name: 'Get Started' })).not.toBeInTheDocument();
 
