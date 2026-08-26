@@ -6,7 +6,7 @@ import xpTarget from '../../../assets/xp-target.svg';
 import EventsSection from './EventsSection';
 import { SITE_IDENTITY } from '../../../constants/site';
 
-const heroArt = [
+export const HOME_HERO_ART = [
   ' █████╗ ██████╗  ██████╗',
   '██╔══██╗██╔══██╗██╔════╝',
   '███████║██║  ██║██║     ',
@@ -14,8 +14,10 @@ const heroArt = [
   '██║  ██║██████╔╝╚██████╗',
   '╚═╝  ╚═╝╚═════╝  ╚═════╝',
   '',
-  SITE_IDENTITY.publicName,
+  SITE_IDENTITY.registeredOrganizationName,
 ];
+
+export const HOME_HERO_TAGLINE = 'Software Engineering & Product Development @ UNG';
 
 export default function HomeModule() {
   return (
@@ -32,7 +34,7 @@ export default function HomeModule() {
             <pre className="terminal-prompt">C:\&gt; _</pre>
             <div className="hero-content">
               <MultiLineTypeWriter
-                lines={heroArt}
+                lines={HOME_HERO_ART}
                 speed={40}
                 delay={300}
                 cursor={true}
@@ -41,7 +43,7 @@ export default function HomeModule() {
                 lineClassName="hero-line"
                 loop={false}
               />
-              <p className="hero-tagline">Software Engineering @ UNG</p>
+              <p className="hero-tagline">{HOME_HERO_TAGLINE}</p>
             </div>
           </div>
         </div>
