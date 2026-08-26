@@ -58,6 +58,8 @@ describe('member privacy controls', () => {
     const newsletter = screen.getByRole('checkbox', { name: /Email me optional club-announcement newsletters/ });
     expect(publicProfile).not.toBeChecked();
     expect(newsletter).not.toBeChecked();
+    expect(publicProfile.nextElementSibling).toHaveClass('profile-module__checkbox-label');
+    expect(newsletter.nextElementSibling).toHaveClass('profile-module__checkbox-label');
 
     await user.click(publicProfile);
     await user.click(newsletter);

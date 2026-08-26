@@ -251,11 +251,11 @@ export default function ProfileModule() {
               <legend>Privacy and Communications</legend>
               <div className="profile-module__checkbox-row">
                 <input id="public-profile-choice" type="checkbox" checked={form.isPublicProfile} onChange={(event) => setForm((current) => ({ ...current, isPublicProfile: event.target.checked }))} />
-                <label htmlFor="public-profile-choice"><strong>Show my profile in the public Members directory</strong><span>Publishes your handle, name, optional profile fields, avatar, and links. Turning this off hides the directory card but does not delete an avatar or revoke a direct image URL someone already saved; use “Remove Current Profile Picture” below when needed. Your email and account activity remain private.</span></label>
+                <label className="profile-module__checkbox-label" htmlFor="public-profile-choice"><strong>Show my profile in the public Members directory</strong><span>Publishes your handle, name, optional profile fields, avatar, and links. Turning this off hides the directory card but does not delete an avatar or revoke a direct image URL someone already saved; use “Remove Current Profile Picture” below when needed. Your email and account activity remain private.</span></label>
               </div>
               <div className="profile-module__checkbox-row">
                 <input id="newsletter-choice" type="checkbox" checked={form.newsletterOptIn} onChange={(event) => setForm((current) => ({ ...current, newsletterOptIn: event.target.checked }))} />
-                <label htmlFor="newsletter-choice"><strong>Email me optional club-announcement newsletters</strong><span>You can turn these announcements off here at any time.</span></label>
+                <label className="profile-module__checkbox-label" htmlFor="newsletter-choice"><strong>Email me optional club-announcement newsletters</strong><span>You can turn these announcements off here at any time.</span></label>
               </div>
               <p>Read the <a href="/privacy">Privacy Policy</a> for complete data and retention details.</p>
             </fieldset>
