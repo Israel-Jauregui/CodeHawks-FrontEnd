@@ -6,6 +6,8 @@ import { validateImageFile } from '../../../services/mediaUpload';
 import type { CreateTeamInput, TeamCategory } from '../../../types/clubData';
 import ResourceImagePicker from '../../ResourceImagePicker';
 import TeamCard from '../../TeamCard';
+import ResourceWorkspace from '../../ResourceWorkspace';
+import type { ManagedResource } from '../../../services/resourceManagement';
 import './TeamModule.css';
 
 const EMPTY_FORM: CreateTeamInput = {
@@ -16,8 +18,9 @@ const EMPTY_FORM: CreateTeamInput = {
   maxMembers: 6,
 };
 
-export default function TeamModule() {
-  const { isAuthenticated } = useAuth();
+export default function TeamModule({ selectedId }: { selectedId?: string }) {
+  const { isAuthenticated, user } = useAuth();
+  const [created, setCreated] = useState<ManagedResource>();
   const canUseMemberFeatures = isUsingLocalData || isAuthenticated;
   const { teams, isLoading, isSaving, isJoining, error, saveError, joinError, reload, createTeam, joinTeam } = useTeamsData();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -37,6 +40,7 @@ export default function TeamModule() {
     }
     const result = await createTeam({ ...form, name: form.name.trim(), description: form.description.trim() });
     if (!result) return;
+    if (user) setCreated({ ...result.team, ownerId: user.id });
     const imageMessage = result.imageUploadError
       ? ` ${result.imageUploadError}`
       : form.imageFile ? ' Team image uploaded.' : '';
@@ -64,6 +68,7 @@ export default function TeamModule() {
   return (
     <section className="team-module" id="team">
       <h2>Team Workspace</h2>
+      <ResourceWorkspace type="team" selectedId={selectedId} created={created?.ownerId === user?.id ? created : undefined} onChanged={reload} />
       <p className="team-module__subtitle">Find a competition, study, or project team—or create one for other CodeHawks.</p>
       <div className="team-module__toolbar">
         {canUseMemberFeatures && <button type="button" onClick={() => setIsCreateOpen((open) => !open)}>{isCreateOpen ? 'Close Form' : 'Create Team'}</button>}

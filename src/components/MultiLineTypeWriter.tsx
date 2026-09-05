@@ -33,7 +33,7 @@ export const MultiLineTypeWriter: React.FC<MultiLineTypeWriterProps> = ({
   );
   const [hasStarted, setHasStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const linesSignature = lines.join('\u0000');
+  const linesSignature = JSON.stringify(lines);
 
   useEffect(() => {
     // Handle initial delay
@@ -107,8 +107,9 @@ export const MultiLineTypeWriter: React.FC<MultiLineTypeWriterProps> = ({
   // with the same strings. Depending on `lines` directly would treat
   // that as "new content" and restart the animation unnecessarily.
   useEffect(() => {
-    setDisplayedLines(lines.map(() => ''));
-    setCurrentIndices(lines.map(() => 0));
+    const nextLines = JSON.parse(linesSignature) as string[];
+    setDisplayedLines(nextLines.map(() => ''));
+    setCurrentIndices(nextLines.map(() => 0));
     setIsComplete(false);
     setHasStarted(false);
   }, [linesSignature]);

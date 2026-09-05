@@ -5,6 +5,7 @@ import type {
   MemberLookupSummary,
   Project,
   Team,
+  EventRsvpStatus,
 } from '../types/clubData';
 import { apiRequest, apiRequestPage } from './apiClient';
 import {
@@ -40,6 +41,10 @@ async function getAllPages<T>(path: string, auth = false): Promise<T[]> {
 
 function clearCached(path: string) {
   cache.delete(path);
+}
+
+export function invalidatePublicResources() {
+  cache.clear();
 }
 
 async function uploadResourceImage<T extends Project | Team>(
@@ -159,6 +164,13 @@ export const apiClubDataProvider: ClubDataProvider = {
   },
 
   getEvents: () => getAllPages<ClubEvent>('/v1/events'),
+
+  getEventRsvp: async (eventId) => {
+    const rsvp = await apiRequest<{ status: EventRsvpStatus } | null>(
+      `/v1/events/${encodeURIComponent(eventId)}/rsvp`, { auth: true },
+    );
+    return rsvp?.status ?? null;
+  },
 
   setEventRsvp: async (eventId, status) => {
     await apiRequest<void>(`/v1/events/${encodeURIComponent(eventId)}/rsvp`, {

@@ -6,6 +6,7 @@ import type {
   Project,
   Team,
   TeamJoinStatus,
+  EventRsvpStatus,
 } from '../types/clubData';
 
 const LOCAL_FETCH_DELAY_MS = 160;
@@ -153,5 +154,11 @@ export const localClubDataProvider: ClubDataProvider = {
   },
 
   getEvents: async () => simulateLocalFetch([...mockEvents]),
-  setEventRsvp: async () => simulateLocalFetch(undefined),
+  getEventRsvp: async (eventId) => {
+    const value = window.localStorage.getItem(`clubWebsite.rsvp.${eventId}`);
+    return value === 'going' || value === 'maybe' ? value : null;
+  },
+  setEventRsvp: async (eventId: string, status: EventRsvpStatus) => {
+    window.localStorage.setItem(`clubWebsite.rsvp.${eventId}`, status);
+  },
 };

@@ -3,9 +3,19 @@ import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
+import tseslint from 'typescript-eslint'
 
 export default defineConfig([
   globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [tseslint.configs.recommended],
+    plugins: { 'react-hooks': reactHooks },
+    languageOptions: { globals: globals.browser },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+    },
+  },
   {
     files: ['**/*.{js,jsx}'],
     extends: [
