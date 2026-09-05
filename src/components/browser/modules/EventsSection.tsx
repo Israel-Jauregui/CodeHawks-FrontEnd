@@ -15,9 +15,13 @@ const timeFormatter = new Intl.DateTimeFormat('en-US', {
 });
 
 export default function EventsSection() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const canRsvp = isUsingLocalData || isAuthenticated;
-  const { events, isLoading, error, reload, isSavingRsvp, rsvpError, rsvpByEvent, setRsvp } = useEventsData();
+  return <AccountEvents key={isUsingLocalData ? 'local' : user?.id ?? 'anonymous'} canRsvp={canRsvp} />;
+}
+
+function AccountEvents({ canRsvp }: { canRsvp: boolean }) {
+  const { events, isLoading, error, reload, isSavingRsvp, rsvpError, rsvpByEvent, setRsvp } = useEventsData(canRsvp);
 
   return (
     <section id="events" className="events-section">

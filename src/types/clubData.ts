@@ -206,4 +206,5 @@ export interface ClubDataProvider {
   requestToJoinTeam: (teamId: string) => Promise<TeamJoinStatus>;
   getEvents: () => Promise<ClubEvent[]>;
   setEventRsvp: (eventId: string, status: EventRsvpStatus) => Promise<void>;
+  getEventRsvp: (eventId: string) => Promise<EventRsvpStatus | null>;
 }

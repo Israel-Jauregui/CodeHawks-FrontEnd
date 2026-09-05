@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { ResourceType } from '../../types/clubData';
 import MembersDirectory from '../MembersDirectory';
 import BrowserErrorBoundary from './BrowserErrorBoundary';
@@ -33,15 +33,15 @@ export default function BrowserContentHost({
   onSectionScrollHandled,
   onNavigateRoute,
 }: BrowserContentHostProps) {
+  const [selectedResource, setSelectedResource] = useState<{ type: ResourceType; id: string }>();
   useEffect(() => {
     if (route !== 'home' || !sectionScrollTarget) return;
     document.getElementById(sectionScrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     onSectionScrollHandled();
   }, [onSectionScrollHandled, route, sectionScrollTarget]);
 
-  const openResource = (resourceType: ResourceType) => {
-    // The list routes are the closest current virtual-browser destination.
-    // The UUID remains available to a future detail route without parsing notification text.
+  const openResource = (resourceType: ResourceType, resourceId: string) => {
+    setSelectedResource({ type: resourceType, id: resourceId });
     onNavigateRoute(resourceType === 'project' ? 'projects' : 'team');
   };
 
@@ -50,8 +50,8 @@ export default function BrowserContentHost({
       <h1 className="visually-hidden">{ROUTE_HEADINGS[route]}</h1>
       <BrowserErrorBoundary resetKey={route}>
         {route === 'home' && <HomeModule />}
-        {route === 'projects' && <ProjectsModule />}
-        {route === 'team' && <TeamModule />}
+        {route === 'projects' && <ProjectsModule selectedId={selectedResource?.type === 'project' ? selectedResource.id : undefined} />}
+        {route === 'team' && <TeamModule selectedId={selectedResource?.type === 'team' ? selectedResource.id : undefined} />}
         {route === 'members' && <MembersDirectory />}
         {route === 'profile' && <ProfileModule />}
         {route === 'notifications' && <NotificationsModule onOpenResource={openResource} />}

@@ -149,7 +149,8 @@ export default function PrivacyPolicyPage() {
           Microsoft-identity, email, and handle lookup records; recipient-side notifications and invitations;
           preference-change history; indexed event RSVPs; direct live participation links; and all avatar objects
           attributable to that account. It anonymizes live project and team ownership or membership references
-          where applicable.
+          where applicable. For suspended accounts, a minimal school-identity restriction remains to enforce
+          the suspension; the profile, email, and handle are still removed.
         </li>
         <li>
           <strong>Records requiring officer-assisted review:</strong> legacy non-indexed RSVPs; authored invitation,

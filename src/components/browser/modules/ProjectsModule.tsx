@@ -6,6 +6,8 @@ import { validateImageFile } from '../../../services/mediaUpload';
 import type { CreateProjectInput, MemberLookupSummary } from '../../../types/clubData';
 import ProjectCard from '../../ProjectCard';
 import ResourceImagePicker from '../../ResourceImagePicker';
+import ResourceWorkspace from '../../ResourceWorkspace';
+import type { ManagedResource } from '../../../services/resourceManagement';
 import './ProjectsModule.css';
 
 interface ProjectFormValues {
@@ -39,8 +41,9 @@ function optionalValue(value: string): string | undefined {
   return value.trim() || undefined;
 }
 
-export default function ProjectsModule() {
-  const { isAuthenticated } = useAuth();
+export default function ProjectsModule({ selectedId }: { selectedId?: string }) {
+  const { isAuthenticated, user } = useAuth();
+  const [created, setCreated] = useState<ManagedResource>();
   const canUseMemberFeatures = isUsingLocalData || isAuthenticated;
   const {
     projects,
@@ -155,6 +158,8 @@ export default function ProjectsModule() {
     const result = await addProject(input);
     if (!result) return;
 
+    if (user) setCreated({ ...result.project, ownerId: user.id });
+
     const reviewMessage = result.project.status === 'pending_review'
       ? ' It is awaiting officer review before appearing publicly.'
       : ' It was saved as a draft.';
@@ -177,6 +182,7 @@ export default function ProjectsModule() {
       <p className="projects-module__subtitle">
         Browse published club builds, find collaborators, and submit your next idea.
       </p>
+      <ResourceWorkspace type="project" selectedId={selectedId} created={created?.ownerId === user?.id ? created : undefined} onChanged={reload} />
 
       <div className="projects-module__toolbar">
         {canUseMemberFeatures && (

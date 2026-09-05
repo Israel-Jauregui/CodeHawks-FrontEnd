@@ -98,7 +98,8 @@ function AccountDeletionDialog({ open, isDeleting, error, onCancel, onConfirm }:
           links, and all avatar objects attributable to your account. It anonymizes live shared references where
           applicable. Historical authored snapshots, newsletters and delivery records, audits, legacy non-indexed
           activity, owned club content, and project, team, or event media may remain pending officer review. It does
-          not delete your UNG Microsoft account. This action cannot be undone.
+          not delete your UNG Microsoft account. If your club account is suspended, a minimal school-identity
+          restriction remains so deletion does not lift the suspension. This action cannot be undone.
         </p>
         <label htmlFor="delete-account-confirmation">Type <strong>DELETE</strong> to confirm</label>
         <input id="delete-account-confirmation" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} autoComplete="off" autoFocus disabled={isDeleting} />

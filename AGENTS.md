@@ -14,12 +14,11 @@ npm run lint       # eslint (flat config)
 npm run preview    # preview production build
 ```
 
-- **No test runner.** `"test"` script is an empty string. No test framework is installed.
+- **Tests:** `npm test` runs TypeScript checks and Vitest. `npm run lint` includes JavaScript and TypeScript, including React hook rules.
 - **No `format` script.** CONTRIBUTING.md mentions `npm run format` / Prettier but neither is installed nor configured — do not reference it.
 
 ## Known Gaps
-- **No `tsconfig.json`** despite `.tsx` files in `src/components/` and `src/pages/`. TypeScript type-checking is not wired up.
-- **ESLint only targets `*.{js,jsx}`** (`eslint.config.js`). `.tsx` files are not linted.
+- `tsconfig.json` covers the application and `npm run typecheck` runs it independently.
 - **Mixed extensions:** entrypoints (`main.jsx`, `App.jsx`) are JSX; components and pages are `.tsx`. Follow the existing pattern per directory when adding files.
 
 ## AWS Infrastructure Guardrail

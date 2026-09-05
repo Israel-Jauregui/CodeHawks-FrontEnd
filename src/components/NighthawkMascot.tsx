@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import nighthawkMascot from '../../nighthawk.webp';
 import './NighthawkMascot.css';
 
@@ -66,7 +66,7 @@ export const NighthawkMascot: React.FC<NighthawkMascotProps> = ({ boundsRef }) =
     positionRef.current = position;
   }, [position]);
 
-  const clampPosition = (nextPosition: Position): Position => {
+  const clampPosition = useCallback((nextPosition: Position): Position => {
     const boundsElement = boundsRef.current;
     const mascotElement = mascotRef.current;
 
@@ -88,9 +88,9 @@ export const NighthawkMascot: React.FC<NighthawkMascotProps> = ({ boundsRef }) =
       x: Math.min(Math.max(nextPosition.x, boundsRect.left + EDGE_PADDING), maxX),
       y: Math.min(Math.max(nextPosition.y, boundsRect.top + EDGE_PADDING), maxY),
     };
-  };
+  }, [boundsRef]);
 
-  const getDefaultPosition = (): Position => {
+  const getDefaultPosition = useCallback((): Position => {
     const boundsElement = boundsRef.current;
     const mascotElement = mascotRef.current;
 
@@ -103,7 +103,7 @@ export const NighthawkMascot: React.FC<NighthawkMascotProps> = ({ boundsRef }) =
       x: boundsRect.left + boundsElement.clientWidth - mascotElement.offsetWidth - 18,
       y: boundsRect.top + boundsElement.clientHeight - mascotElement.offsetHeight - TASKBAR_HEIGHT - 6,
     });
-  };
+  }, [boundsRef, clampPosition]);
 
   const triggerReaction = () => {
     setIsReacting(false);
@@ -135,7 +135,7 @@ export const NighthawkMascot: React.FC<NighthawkMascotProps> = ({ boundsRef }) =
       positionRef.current = settledPosition;
       persistPosition(settledPosition);
     });
-  }, []);
+  }, [clampPosition, getDefaultPosition]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -150,7 +150,7 @@ export const NighthawkMascot: React.FC<NighthawkMascotProps> = ({ boundsRef }) =
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [clampPosition]);
 
   useEffect(() => {
     return () => {

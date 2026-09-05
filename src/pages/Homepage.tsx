@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import TopAppBar from '../components/TopAppBar';
 import LoginModal from '../components/LoginModal';
 import NighthawkMascot from '../components/NighthawkMascot';
@@ -91,6 +91,18 @@ const PAGE_METADATA: Record<BrowserRoute, { title: string; description: string; 
   notifications: { title: 'Notifications', description: 'Review your CodeHawks member notifications.', path: '/notifications', noIndex: true },
   'event-manager': { title: 'Event Manager', description: 'Manage CodeHawks club events.', path: '/manage/events', noIndex: true },
 };
+
+// These constants define the "default launch slot" of the browser
+// window on the XP desktop. We keep the browser offset from the icon
+// column, then clamp it back into the visible desktop when the user
+// resizes the viewport or drags the window around.
+const MOBILE_BREAKPOINT = 768;
+const WINDOW_MIN_POSITIONS: DesktopWindowPositions = {
+  browser: { x: 152, y: 20 },
+  cwInfo: { x: 230, y: 68 },
+  hacklonega: { x: 184, y: 36 },
+};
+const DESKTOP_WINDOW_EDGE_PADDING = 16;
 
 export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => {
   const DESKTOP_WINDOW_ORDER: DesktopWindowId[] = ['browser', 'cwInfo', 'hacklonega'];
@@ -240,19 +252,7 @@ export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => 
 
   usePageMetadata(PAGE_METADATA[currentRoute]);
 
-  // These constants define the "default launch slot" of the browser
-  // window on the XP desktop. We keep the browser offset from the icon
-  // column, then clamp it back into the visible desktop when the user
-  // resizes the viewport or drags the window around.
-  const MOBILE_BREAKPOINT = 768;
-  const WINDOW_MIN_POSITIONS: DesktopWindowPositions = {
-    browser: { x: 152, y: 20 },
-    cwInfo: { x: 230, y: 68 },
-    hacklonega: { x: 184, y: 36 },
-  };
-  const DESKTOP_WINDOW_EDGE_PADDING = 16;
-
-  const clampWindowPosition = (
+  const clampWindowPosition = useCallback((
     windowId: DesktopWindowId,
     nextPosition: WindowPosition,
   ) => {
@@ -284,7 +284,7 @@ export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => 
       x: Math.min(Math.max(nextPosition.x, WINDOW_MIN_POSITIONS[windowId].x), maxX),
       y: Math.min(Math.max(nextPosition.y, WINDOW_MIN_POSITIONS[windowId].y), maxY),
     };
-  };
+  }, []);
 
   // Re-clamp the browser window whenever it mounts or the viewport size
   // changes. This mirrors a real desktop manager: windows keep their
@@ -335,7 +335,7 @@ export const Homepage: React.FC<HomepageProps> = ({ initialRoute = 'home' }) => 
     return () => {
       window.removeEventListener('resize', syncWindowIntoViewport);
     };
-  }, [draggedWindows, openWindows]);
+  }, [draggedWindows, openWindows, clampWindowPosition]);
 
   const setWindowOpen = (windowId: DesktopWindowId, isOpen: boolean) => {
     setOpenWindows((currentWindows) => ({
