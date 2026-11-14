@@ -1,191 +1,42 @@
-# Contributing to UNGs App Development Club Website - Frontend
+# Contributing
 
-Thank you for your interest in contributing to our frontend! This document provides guidelines and instructions for contributing to this React + Vite project.
+Thanks for helping with the Software Engineering Club's site. It is one static page, so most changes are small.
 
-## Getting Started
+## Set up
 
-1. **Fork the repository** and clone it locally
-2. **Install dependencies**: `npm install`
-3. **Set up environment variables**: Copy `.env.example` to `.env.local` and configure
-4. **Start the dev server**: `npm run dev`
-5. **Create a new branch** for your work (see Branch Naming below)
-6. **Make your changes** following our code style guidelines
-7. **Test your changes** thoroughly
-8. **Submit a pull request** when ready
+You need Node.js 22.12 or newer.
 
-## Prerequisites
-
-- Node.js (v18 or higher recommended)
-- npm or yarn
-- Basic knowledge of React and modern JavaScript/TypeScript
-
-## Branch Naming Conventions
-
-Use descriptive branch names with the following prefixes:
-
-- `feature/` - New features (e.g., `feature/add-event-calendar`)
-- `bugfix/` - Bug fixes (e.g., `bugfix/fix-mobile-nav`)
-- `docs/` - Documentation updates (e.g., `docs/update-readme`)
-- `refactor/` - Code refactoring (e.g., `refactor/extract-button-component`)
-- `style/` - UI/styling changes (e.g., `style/update-color-scheme`)
-- `test/` - Adding or updating tests (e.g., `test/add-component-tests`)
-
-## Code Style Guidelines
-
-### General React Best Practices
-- Use functional components with hooks (no class components)
-- Keep components small and focused on a single responsibility
-- Extract reusable logic into custom hooks
-- Use meaningful component and variable names (e.g., `UserProfileCard` not `Card2`)
-- Avoid prop drilling - use Context API or state management when needed
-
-### File Structure
-- Place components in `/src/components/`
-- Use PascalCase for component files (e.g., `EventCard.jsx`)
-- Keep related files together (component, styles, tests)
-- Place shared utilities in `/src/utils/`
-- Store constants in `/src/constants/`
-
-### Code Formatting
-- **Run Prettier** before committing: `npm run format`
-- **Run ESLint** and fix issues: `npm run lint`
-- Use consistent quote style (single quotes preferred)
-- Add trailing commas in multiline objects/arrays
-- Use 2 spaces for indentation
-
-### TypeScript/JavaScript
-- Use `const` and `let` (never `var`)
-- Prefer function declaration for component definitions
-- Use destructuring for props: `const { title, description } = props`
-- Use optional chaining: `user?.profile?.avatar`
-
-### Component Example
-```jsx
-import { useState } from 'react';
-import './EventCard.css';
-
-function EventCard({ title, date, description, onRegister }) {
-  const [isRegistered, setIsRegistered] = useState(false);
-
-  const handleRegister = () => {
-    onRegister();
-    setIsRegistered(true);
-  };
-
-  return (
-    <div className="event-card">
-      <h3>{title}</h3>
-      <p className="date">{date}</p>
-      <p>{description}</p>
-      <button onClick={handleRegister} disabled={isRegistered}>
-        {isRegistered ? 'Registered' : 'Register'}
-      </button>
-    </div>
-  );
-};
-
-export default EventCard;
+```sh
+npm ci
+npm run dev
 ```
 
-### CSS/Styling
-- Use CSS Modules or styled-components if configured
-- Follow BEM naming convention for CSS classes
-- Make components responsive (mobile-first approach)
-- Use CSS variables for colors and common values
-- Avoid inline styles except for dynamic values
+## Make a change
 
-## Testing Requirements
+1. Branch from `main`: `feature/…`, `bugfix/…` or `docs/…`.
+2. Make the change. The [README](README.md#change-it) says which file holds what.
+3. Run `npm run lint` and `npm test`. Both must pass; CI runs the same two.
+4. Open a pull request that says what changed and why. Add a screenshot for anything visual.
 
-- Write tests for new components and features
-- Test user interactions and edge cases
-- Ensure all existing tests pass: `npm test`
-- Aim for meaningful coverage of critical paths
-- Use React Testing Library for component tests
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat: add HackGT photos`, `fix: correct the Discord link`.
 
-## Pull Request Process
+## House rules
 
-1. **Update documentation** if you've changed functionality
-2. **Ensure the app builds**: `npm run build`
-3. **Run all checks**: `npm run lint && npm test`
-4. **Write a clear PR description** using the PR template
-5. **Link related issues** (e.g., "Closes #42")
-6. **Add screenshots/videos** for UI changes
-7. **Request reviews** from at least one club member
-8. **Address review feedback** promptly
-9. **Keep PRs focused** - one feature or fix per PR
+- **Follow the [club styling guide](https://github.com/Software-Engineering-Club-UNG/club-styling-guide).** Use the colors already defined at the top of `src/styles.css`. Square corners, hard shadows, no new fonts.
+- **No inline styles.** The site's security policy blocks them, and the build fails if one slips in. Put styling in `src/styles.css`.
+- **Keep it static.** No forms, sign-ins, trackers or third-party scripts.
+- **Write alt text.** Every image says what it shows.
+- **Don't guess facts.** Leave an event's date or result empty if you are not sure of it.
 
-### PR Checklist
-Before submitting, verify:
-- [ ] Code follows the style guidelines
-- [ ] App runs without errors or warnings
-- [ ] All tests pass (`npm test`)
-- [ ] Linting passes (`npm run lint`)
-- [ ] Build succeeds (`npm run build`)
-- [ ] Components are responsive on mobile/tablet/desktop
-- [ ] No `console.log` or debug code left in
-- [ ] Screenshots included for UI changes
-- [ ] Commit messages are clear and descriptive
+## Adding photos
 
-## Commit Message Guidelines
+1. Put the originals in `photos-src/<event>/`, where `<event>` is a slug from `src/constants/events.ts` (for example `photos-src/hackgt/`). iPhone HEIC files need exporting as JPEG first.
+2. Run `npm run photos`.
+3. Open `photos-src/<event>/captions.json` and replace each new placeholder line with a sentence describing the photo. Describe what is happening; do not name people.
+4. Run `npm run photos` again, then commit `public/photos/`, the captions file and `src/constants/photos.generated.ts`.
 
-Write clear commit messages that explain what and why:
+The originals are git-ignored and never leave your machine. The published copies have all metadata removed, including location. Only add photos the people in them are happy to have on a public site.
 
-```
-feat: add user profile page
+## Infrastructure
 
-- Created profile component with bio and avatar
-- Integrated with backend API
-- Responsive design for all screen sizes
-```
-
-Use conventional commit prefixes:
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation changes
-- `style:` - UI/CSS changes
-- `refactor:` - Code refactoring
-- `test:` - Adding or updating tests
-- `chore:` - Maintenance tasks (dependencies, config)
-
-## Common Issues & Solutions
-
-### Port already in use
-- Change the port in `vite.config.js` or kill the process using port 5173
-
-### Environment variables not loading
-- Ensure variables start with `VITE_`
-- Restart the dev server after changing `.env.local`
-
-### CORS errors
-- Check that backend URL is correct in `.env.local`
-- Verify backend is running and configured for CORS
-
-## Getting Help
-
-- **Questions?** Open an issue with the "question" label
-- **Stuck?** Reach out in the club Discord/Slack
-- **Found a bug?** Open an issue with the "bug" label
-- **Have an idea?** Open an issue with the "enhancement" label
-- **Need design help?** Tag the design team in your PR
-
-## Useful Commands
-
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
-npm test             # Run tests
-```
-
-## Code of Conduct
-
-Be respectful, inclusive, and collaborative. We're all learning together! This is a club project - help each other grow as developers.
-
-## Recognition
-
-All contributors will be recognized in our README. Thank you for helping build an awesome club website!
-
----
-
-**Questions about these guidelines?** Open an issue and we'll clarify!
+Changes under `infra/` are reviewed by the repository owner and deployed with the **Deploy infrastructure** workflow. See [docs/RUNBOOK.md](docs/RUNBOOK.md).
