@@ -8,6 +8,7 @@ import PhotoStrip from './components/PhotoStrip';
 import PhotoViewer from './components/PhotoViewer';
 import RetroWindow from './components/RetroWindow';
 import Starfield from './components/Starfield';
+import SteepleSpinner from './components/SteepleSpinner';
 
 const eventNames = Object.fromEntries(events.map(event => [event.slug, event.name]));
 const photosOf = (slug: string) => photos.filter(photo => photo.event === slug);
@@ -51,9 +52,12 @@ export default function App() {
       <MountainBackdrop />
       <div className="site" id="top">
         <header className="site-header">
-          <a className="site-logo" href="#top" aria-label={`${club.name} home`}>
-            <img src="/brand/swe-prompt.svg" alt="" width="687" height="183" />
-          </a>
+          <div className="site-brand">
+            <a className="site-logo" href="#top" aria-label={`${club.name} home`}>
+              <img src="/brand/swe-prompt.svg" alt="" width="687" height="183" />
+            </a>
+            <SteepleSpinner />
+          </div>
           <nav aria-label="Main navigation">
             <a className="nav-link" href="#about">About</a>
             <a className="nav-link" href="#events">Events</a>
@@ -114,10 +118,7 @@ export default function App() {
 
           {photos.length > 0 && (
             <section className="section" id="photos" aria-labelledby="photos-heading">
-              <div className="section-head">
-                <p className="eyebrow">Photos</p>
-                <h2 id="photos-heading">Proof we were there.</h2>
-              </div>
+              <h2 className="sr-only" id="photos-heading">Photos</h2>
               <div className="gallery">
                 <PhotoViewer photos={photos} names={eventNames} start={viewerStart} />
                 <RetroWindow
