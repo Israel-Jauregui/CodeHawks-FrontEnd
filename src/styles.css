@@ -160,6 +160,18 @@ a:hover { text-decoration-thickness: 2px; }
 /* An event with no photos yet: a blank screen with the faint cobalt grid from the flyers. */
 .event__photo--empty { aspect-ratio: 16 / 9; display: grid; place-items: center; background-image: linear-gradient(rgb(22 75 196 / .3) 1px, transparent 1px), linear-gradient(90deg, rgb(22 75 196 / .3) 1px, transparent 1px); background-size: 24px 24px; }
 .event__photo--empty span { padding: .35em .7em; border: 2px solid var(--steel); background: var(--navy); color: var(--steel); font: bold 13px/1.3 var(--mono); letter-spacing: .2em; text-transform: uppercase; }
+/* A slideshow card: the photos stack in one cell and the current one sits on top. Each new photo
+   loads in over the last, top to bottom in hard bands. */
+.event__slides { display: grid; overflow: hidden; background: var(--navy); }
+.event__slides .event__photo { grid-area: 1 / 1; }
+.event__slides [data-slide="before"] { z-index: 1; }
+.event__slides [data-slide="now"] { z-index: 2; }
+.event__slides[data-started] [data-slide="now"] { animation: slide-load .8s steps(8, end); }
+@keyframes slide-load { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+/* The photo viewer's fades. Separate names on purpose: a browser restarts an animation when its
+   name changes, not when only its direction does. */
+@keyframes photo-fade { from { opacity: 0; } }
+@keyframes photo-fade-out { to { opacity: 0; } }
 .event__body { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 18px 18px 20px; }
 .event__tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; font: bold 11px/1.2 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 .event__tags span { padding: .5em .65em; background: var(--gold); color: var(--navy); }
@@ -181,9 +193,11 @@ a:hover { text-decoration-thickness: 2px; }
 /* ---------- Photos: the viewer, the README and the strip of photo cards ---------- */
 .gallery { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; gap: clamp(28px, 4vw, 64px); }
 .viewer__screen { position: relative; aspect-ratio: 4 / 3; background: var(--navy); }
-.viewer__screen canvas, .viewer__fallback { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
-.viewer__fallback { object-fit: contain; }
-.viewer[data-live] .viewer__fallback { visibility: hidden; }
+.viewer__screen img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+/* The photo before is opaque only where it sits under the current one, so a narrower photo
+   fading in over a wider one would leave the old edges showing. Fade the old one out too. */
+.viewer__screen[data-started] [data-slide="now"] { animation: photo-fade .6s ease; }
+.viewer__screen[data-started] [data-slide="before"] { animation: photo-fade-out .6s ease forwards; }
 .readme { display: flex; flex-direction: column; gap: .75em; padding: 1.1em 1.2em 1.3em; font: 15px/1.6 var(--sans); }
 .line { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .6em; margin: 0; }
 .line::before { content: ">"; color: var(--gold); font: bold 1em/1.6 var(--mono); }
@@ -270,5 +284,7 @@ a:hover { text-decoration-thickness: 2px; }
   .cursor, .star, .boot__art, .boot__type, .boot__last, .boot__checks li { animation: none; }
   .strip { overflow-x: auto; }
   .strip__track { animation: none; }
+  .event__slides[data-started] [data-slide="now"], .viewer__screen[data-started] [data-slide] { animation: none; }
+  .viewer__screen [data-slide="before"] { visibility: hidden; }
   .strip__card[data-copy] { display: none; }
 }

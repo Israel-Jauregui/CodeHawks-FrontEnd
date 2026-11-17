@@ -13,6 +13,8 @@ export type ClubEvent = {
   hosted?: boolean;
   // The photo (its slug) shown on the card. Defaults to the first one in the folder.
   cover?: string;
+  // Cycle the card through every photo in the folder, starting from the cover.
+  slideshow?: boolean;
   where?: string;
   when?: string;
   result?: string;
@@ -59,6 +61,8 @@ export const events: ClubEvent[] = [
     slug: 'codelinc',
     name: 'CodeLinc',
     kind: 'Hackathon',
+    cover: 'pair-coding',
+    slideshow: true,
     summary: 'A UNG team, a problem statement and a deadline.',
   },
 ];

@@ -1,11 +1,14 @@
 import type { ClubEvent } from '../constants/events';
 import type { Photo } from '../constants/photos.generated';
+import CardPhotos from './CardPhotos';
 import RetroWindow from './RetroWindow';
 
 // One event as a retro window. The cover is the photo named in events.ts, or the first one
 // in the event's folder; an event with no photos yet gets a placeholder screen instead.
+// A slideshow event cycles through all its photos, starting from the cover.
 export default function EventCard({ event, photos }: { event: ClubEvent; photos: Photo[] }) {
   const cover = photos.find(photo => photo.slug === event.cover) ?? photos[0];
+  const shown = event.slideshow ? [cover, ...photos.filter(photo => photo !== cover)] : [cover];
   const facts = [event.where, event.when].filter(Boolean).join(' // ');
   return (
     <article className="event" id={`event-${event.slug}`} data-hosted={event.hosted || undefined}>
@@ -14,7 +17,7 @@ export default function EventCard({ event, photos }: { event: ClubEvent; photos:
         status={[event.kind, photos.length ? `${photos.length} photo${photos.length === 1 ? '' : 's'}` : 'Photos soon']}
       >
         {cover
-          ? <img className="event__photo" src={`/photos/${cover.event}/thumb/${cover.slug}.webp`} alt={cover.alt} width={cover.thumbWidth} height={cover.thumbHeight} loading="lazy" decoding="async" />
+          ? <CardPhotos photos={shown} />
           : <div className="event__photo event__photo--empty" aria-hidden="true"><span>{event.name}</span></div>}
         <div className="event__body">
           {(event.hosted || event.result) && (
