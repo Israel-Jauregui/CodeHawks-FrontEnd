@@ -16,9 +16,11 @@
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { basename, extname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
-const root = new URL('..', import.meta.url).pathname;
+// fileURLToPath, not URL.pathname: pathname keeps spaces as %20, which breaks every path below.
+const root = fileURLToPath(new URL('..', import.meta.url));
 const SRC = join(root, 'photos-src');
 const OUT = join(root, 'public/photos');
 const LIST = join(root, 'src/constants/photos.generated.ts');
