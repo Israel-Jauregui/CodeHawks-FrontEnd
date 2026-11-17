@@ -83,14 +83,17 @@ Only needed in a new AWS account. It takes an administrator session on your own 
 ```sh
 cd infra && npm ci
 npx cdk bootstrap aws://<account-id>/us-east-1
-npx cdk deploy SweSite --parameters BudgetEmail=<address for cost alerts>
-npx cdk deploy SweGithubAccess
+npx cdk deploy SweSite -c attachDomain=false --parameters BudgetEmail=<address for cost alerts>
+npx cdk deploy SweGithubAccess -c attachDomain=false
 ```
 
 - The account must already have the GitHub OIDC provider (`token.actions.githubusercontent.com`). The Hacklonega site shares it.
 - The first `SweSite` deploy waits for the certificate. It completes once the two validation CNAMEs are in Cloudflare.
 - Copy the stack outputs into the GitHub environment variables above, run **Deploy site**, and check the site on its `cloudfront.net` address.
-- To put the domain on it: set `"attachDomain": true` in `infra/cdk.json`, deploy, and point the two Cloudflare CNAMEs at the distribution.
+- The first deploy needs `-c attachDomain=false`, because `infra/cdk.json` has it `true`. To then put the domain on it:
+  1. Take `codehawks.org` and `www.codehawks.org` off whichever distribution holds them now. CloudFront allows a domain on only one distribution, and the deploy fails with `CNAMEAlreadyExists` until they are free. The site is down from here until step 2 finishes, a few minutes.
+  2. Deploy `SweSite` with `attachDomain` `true`.
+  3. Point the two Cloudflare CNAMEs at the new distribution. CloudFront routes by domain name, so the site works on the new distribution even before this, but the old distribution cannot be deleted until nothing points at it.
 
 ## Check that it is healthy
 
