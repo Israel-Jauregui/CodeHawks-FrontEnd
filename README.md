@@ -1,52 +1,68 @@
-# CodeHawks Frontend
+<div align="center">
 
-React and Vite frontend for the University of North Georgia App Development Club.
+# swe.
 
-## Local development
+**The website of the Software Engineering Club @ UNG.**
+
+Hackathons, programming contests and a CS community at the University of North Georgia in Dahlonega.
+
+[**codehawks.org**](https://codehawks.org/) · [Discord](https://discord.gg/RQ6xCMpRQm) · [UNG Connect](https://connect.ung.edu/organization/app-development-club-of-ung--dah-) · [Hacklonega](https://hacklonega.dev/)
+
+<img src="docs/images/hero.webp" alt="The site's hero: a gold lowercase swe. wordmark on night blue beside a retro terminal window that has typed SWE in block letters" width="820" />
+
+</div>
+
+## About
+
+One static page that says who we are, shows where we've been, and points you at the Discord. It has no accounts, forms, cookies or analytics.
+
+It replaces an earlier Windows XP themed member platform (teams, projects, sign-in) that Discord made redundant. That version is in this repository's history, and its backend is archived at [CodeHawks-Backend](https://github.com/Israel-Jauregui/CodeHawks-Backend).
+
+## Run it
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Before opening a pull request:
+`npm run lint` and `npm test` are what CI runs. `npm test` builds the site first, then checks the content files and the built page.
 
-```sh
-npm run lint
-npm test
-npm run build
-```
+## Change it
 
-`npm test` first runs the TypeScript compiler in strict, no-output mode and then runs the
-Vitest/React Testing Library behavioral suite in jsdom. ESLint continues to cover the JavaScript
-and JSX entrypoints. The current stable `typescript-eslint` release declares TypeScript support
-only through versions below 6.1, while this project uses TypeScript 7, so TypeScript/TSX files use
-the compiler as their supported static check instead of forcing an incompatible ESLint parser.
+| To change | Edit |
+| --- | --- |
+| The club's name, links or email | `src/constants/club.ts` |
+| The events, their dates and results | `src/constants/events.ts` |
+| Who's in an event's photos | Add the person to `src/constants/members.ts` (name and LinkedIn), then list their id in the event's `members` in `src/constants/events.ts` |
+| Photos | Drop originals in `photos-src/<event>/`, run `npm run photos`, describe each one in `photos-src/<event>/captions.json`, run it again |
+| The page | `src/App.tsx` and `src/styles.css` |
+| The link preview image | `brand/og.html`, then re-render it ([how](docs/RUNBOOK.md#link-preview-image)) |
 
-The application defaults to local mock club data. Copy `.env.example` to `.env.local`, switch
-`VITE_CLUB_DATA_SOURCE` to `api`, and fill in the API Gateway and Microsoft Entra values to
-exercise the serverless backend. The browser sends an Entra API access token—not an ID token—to
-protected `/v1` routes. Public projects, teams, and events do not require sign-in.
+Merging to `main` builds the site and, after an approval in GitHub, publishes it. Everything else is in [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
-Authenticated members can attach JPEG, PNG, or WebP images up to 5 MiB while creating projects,
-teams, and events or editing their avatar. The frontend creates the resource, requests its
-owner-authorized presigned upload, uploads directly to a non-public S3 pending key, and asks the API
-to validate, finalize, and attach it. Cards use the bundled XP placeholder whenever no image is
-attached. Avatar replacement and removal use API-owned cleanup rather than accepting arbitrary URLs.
+## How it's built
 
-## Production deployment
+| | |
+| --- | --- |
+| Site | React 19, TypeScript and Vite, prerendered to static HTML. Hand-written CSS, system fonts, no runtime dependencies besides React |
+| Look | The Typewriter look from the [club styling guide](https://github.com/Software-Engineering-Club-UNG/club-styling-guide), with components carried over from [hacklonega.dev](https://github.com/Israel-Jauregui/Hacklonega) |
+| Hosting | A private S3 bucket behind CloudFront, with a strict Content Security Policy |
+| Infrastructure | AWS CDK in [`infra/`](infra) |
+| DNS | Cloudflare, kept by hand ([the records](docs/RUNBOOK.md#dns)) |
+| Deploys | GitHub Actions with short-lived AWS credentials (OIDC) behind approval gates. No AWS keys are stored anywhere |
 
-Merges to the protected `main` branch run CI but never deploy automatically. A permitted GitHub user must deliberately start **Deploy frontend**, and the job then waits for the repository owner's `frontend-production` approval. After approval it builds the site, assumes a short-lived AWS role through GitHub OIDC, uploads `dist/` to a private S3 bucket, and invalidates CloudFront.
+## Repository
 
-The repository stores no AWS access keys. Terraform lives in [`infrastructure/`](infrastructure/README.md). Configure these variables in the GitHub `frontend-production` environment after applying it:
+| Path | What's there |
+| --- | --- |
+| `src/` | The page, its components and the content files |
+| `photos-src/` | Photo captions. The originals you drop here stay on your machine |
+| `public/` | Published as is: web-ready photos, icons, the 404 page |
+| `scripts/` | The prerender step and the photo converter |
+| `tests/` | Content and built-page checks |
+| `infra/` | The CDK app, its CloudFront Function and their tests |
+| `docs/` | [Runbook](docs/RUNBOOK.md), [SEO checklist](docs/SEO.md), [asset provenance](docs/ASSET-PROVENANCE.md) |
 
-- `AWS_REGION`
-- `AWS_ROLE_ARN`
-- `S3_BUCKET`
-- `CLOUDFRONT_DISTRIBUTION_ID`
-- `VITE_API_BASE_URL`
-- `VITE_ENTRA_TENANT_ID`
-- `VITE_ENTRA_SPA_CLIENT_ID`
-- `VITE_ENTRA_API_SCOPE`
+## Credits
 
-Production deployments use the version on protected `main`, require a manual dispatch, and require a separate protected-environment approval. The workflow remains disabled until the AWS bootstrap and site apply are complete.
+Made by the [Software Engineering Club](https://github.com/Software-Engineering-Club-UNG) at the University of North Georgia. The club is a student organization; this is not an official university site.

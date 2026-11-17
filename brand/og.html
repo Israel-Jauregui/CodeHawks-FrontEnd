@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SWE link preview image (1200 x 630)</title>
+<!-- The source of public/og-swe.png, in the styling guide's Prompt look. It is adapted from
+     club-styling-guide/templates/event-banner.html. To change the image, edit the text in
+     <body> and re-render it (the command is in docs/RUNBOOK.md). This file is not published. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --swe-blue: #002f87; --swe-gold: #ffc62f; --swe-navy: #0a1938; --swe-cobalt: #164bc4;
+    --swe-white: #fff; --swe-steel: #7d96bf;
+    --swe-mono: "JetBrains Mono", ui-monospace, "Courier New", monospace;
+  }
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  .banner {
+    box-sizing: border-box; width: 1200px; height: 630px; padding: 56px 60px;
+    display: grid; grid-template-columns: 1fr 300px; gap: 56px; align-items: center;
+    background-color: var(--swe-navy);
+    background-image:
+      linear-gradient(rgb(22 75 196 / .22) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(22 75 196 / .22) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .head { display: flex; align-items: center; gap: 16px; }
+  .chip {
+    display: grid; place-items: center; width: 46px; height: 34px;
+    background: var(--swe-blue); border: 3px solid var(--swe-gold); box-shadow: 4px 4px 0 var(--swe-cobalt);
+    color: var(--swe-gold); font: 800 18px/1 var(--swe-mono);
+  }
+  .kicker { margin: 0; color: var(--swe-steel); font: 700 19px/1.5 var(--swe-mono); letter-spacing: .2em; text-transform: uppercase; }
+  h1 {
+    margin: 38px 0 0; color: var(--swe-gold); font: 800 132px/.95 var(--swe-mono);
+    letter-spacing: -.02em; text-transform: uppercase; text-shadow: 8px 8px 0 var(--swe-cobalt); white-space: nowrap;
+  }
+  .tagline {
+    display: flex; align-items: center; gap: 16px; margin: 44px 0 0;
+    color: var(--swe-white); font: 700 25px/1.2 var(--swe-mono); letter-spacing: .14em; text-transform: uppercase;
+  }
+  .tagline::before { content: ""; flex: none; width: 84px; height: 9px; background: var(--swe-gold); }
+  .where { display: flex; align-items: center; gap: 18px; margin-top: 44px; }
+  .where::before { content: ""; flex: none; width: 16px; height: 34px; background: var(--swe-gold); }
+  .where p { margin: 0; font: 700 16px/1.7 var(--swe-mono); letter-spacing: .16em; text-transform: uppercase; }
+  .org { color: var(--swe-gold); }
+  .place { color: var(--swe-steel); font-weight: 400 !important; }
+  .panel { background: var(--swe-blue); border: 4px solid var(--swe-steel); box-shadow: 12px 12px 0 var(--swe-cobalt); }
+  .panel__bar {
+    padding: 11px 16px; border-bottom: 4px solid var(--swe-gold);
+    color: var(--swe-white); font: 700 15px/1.4 var(--swe-mono); letter-spacing: .1em; text-transform: uppercase;
+  }
+  .panel__bar b { color: var(--swe-gold); }
+  .panel img { display: block; width: 100%; }
+</style>
+</head>
+<body>
+<main class="banner">
+  <div>
+    <div class="head">
+      <span class="chip" aria-hidden="true">&gt;_</span>
+      <p class="kicker">Software Engineering Club</p>
+    </div>
+    <h1>SWE @ UNG</h1>
+    <p class="tagline">Putting UNG on the map</p>
+    <div class="where">
+      <div>
+        <p class="org">University of North Georgia</p>
+        <p class="place">Dahlonega, Georgia</p>
+      </div>
+    </div>
+  </div>
+  <aside class="panel">
+    <div class="panel__bar"><b>~/ung</b> // swe</div>
+    <img src="../public/brand/swe-mark.svg" alt="UNG Software Engineering Club">
+  </aside>
+</main>
+</body>
+</html>

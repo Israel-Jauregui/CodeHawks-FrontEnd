@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="185 16 274 274" width="256" height="256">
+<title>Layered pixel mountains and pine trees at night, from Hacklonega</title>
+<defs><clipPath id="c"><circle cx="322" cy="153" r="137"/></clipPath></defs>
+<g clip-path="url(#c)">
+<circle cx="322" cy="153" r="137" fill="#0e2461"/>
+<g fill="#92b6e6" opacity=".55"><path d="M207 105h18v-5h24v5h17v4h-59zm167-30h19v-5h27v5h22v4h-68z"/><path d="M250 57h3v3h-3zm151 43h4v4h-4zm-176 40h3v3h-3z"/><path d="M415 129h14v2h-14zm6-6h2v14h-2z"/></g>
+<path d="M175 210v-25h20v-15h20v-17h20v-16h18v18h20v18h20v17h25v-12h24v-18h20v-20h20v-17h18v17h18v18h20v18h25v20h22v115H175Z" fill="#3764b5"/>
+<path d="M175 238v-20h23v-14h23v-16h23v-14h20v15h23v17h24v19h24v-10h22v-16h24v-18h21v16h24v17h23v18h29v69H175Z" fill="#254984"/>
+<path d="M175 270v-19h30v-12h31v-10h29v12h34v12h33v-13h31v-13h28v11h30v13h29v10h23v40H175Z" fill="#173561"/>
+<g fill="#10294f"><path d="M219 205h5v8h5v8h5v7h-9v14h-7v-14h-9v-7h5v-8h5zm-21 21h5v7h5v7h4v7h-8v13h-7v-13h-8v-7h4v-7h5z"/><path d="M405 207h5v9h5v8h5v8h-10v16h-6v-16h-10v-8h5v-8h6zm27 20h5v7h5v8h5v7h-10v16h-6v-16h-9v-7h5v-8h5z"/></g>
+<path d="M238 262h25v3h-25zm109 10h32v3h-32zm-60 9h17v3h-17z" fill="#5074a3"/>
+</g>
+</svg>

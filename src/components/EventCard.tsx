@@ -1,0 +1,50 @@
+import type { ClubEvent } from '../constants/events';
+import { members } from '../constants/members';
+import type { Photo } from '../constants/photos.generated';
+import CardPhotos from './CardPhotos';
+import RetroWindow from './RetroWindow';
+
+// One event as a retro window. The cover is the photo named in events.ts, or the first one
+// in the event's folder; an event with no photos yet gets a placeholder screen instead.
+// A slideshow event cycles through all its photos, starting from the cover.
+export default function EventCard({ event, photos }: { event: ClubEvent; photos: Photo[] }) {
+  const cover = photos.find(photo => photo.slug === event.cover) ?? photos[0];
+  const shown = event.slideshow ? [cover, ...photos.filter(photo => photo !== cover)] : [cover];
+  const facts = [event.where, event.when].filter(Boolean).join(' // ');
+  return (
+    <article className="event" id={`event-${event.slug}`} data-hosted={event.hosted || undefined}>
+      <RetroWindow
+        title={<><span className="win__dir">C:\CODEHAWKS\EVENTS\</span>{event.slug.toUpperCase()}.LOG</>}
+        status={[event.kind, photos.length ? `${photos.length} photo${photos.length === 1 ? '' : 's'}` : 'Photos soon']}
+      >
+        {cover
+          ? <CardPhotos photos={shown} />
+          : <div className="event__photo event__photo--empty" aria-hidden="true"><span>{event.name}</span></div>}
+        <div className="event__body">
+          {(event.hosted || event.result) && (
+            <p className="event__tags">
+              {event.hosted && <span>We hosted</span>}
+              {event.result && <span className="event__result">{event.result}</span>}
+            </p>
+          )}
+          <h3 className="event__name">{event.name}</h3>
+          {facts && <p className="event__facts">{facts}</p>}
+          <p className="event__summary">{event.summary}</p>
+          {event.members && event.members.length > 0 && (
+            <div className="event__people">
+              <p className="event__people-label" id={`people-${event.slug}`}>{photos.length > 1 ? 'In the photos' : 'In the photo'}</p>
+              <ul aria-labelledby={`people-${event.slug}`}>
+                {event.members.map(id => (
+                  <li key={id}>
+                    <a href={members[id].linkedin}>{members[id].name}<span className="sr-only"> on LinkedIn</span> <span aria-hidden="true">↗</span></a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {event.link && <p className="event__link"><a href={event.link.href}>{event.link.label} <span aria-hidden="true">↗</span></a></p>}
+        </div>
+      </RetroWindow>
+    </article>
+  );
+}
