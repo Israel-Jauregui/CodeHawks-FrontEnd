@@ -60,6 +60,7 @@ export const events: ClubEvent[] = [
     name: 'Hacklanta',
     kind: 'Hackathon',
     where: 'Atlanta, Georgia',
+    when: 'October 2026',
     members: ['israel', 'parker'],
     summary: 'A hackathon in Atlanta. Our team built ImagineVR there.',
     link: { href: 'https://github.com/Software-Engineering-Club-UNG/ImagineVR', label: 'ImagineVR on GitHub' },
