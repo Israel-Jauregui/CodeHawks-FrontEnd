@@ -33,6 +33,7 @@ npm run dev
 | --- | --- |
 | The club's name, links or email | `src/constants/club.ts` |
 | The events, their dates and results | `src/constants/events.ts` |
+| Who's in an event's photos | Add the person to `src/constants/members.ts` (name and LinkedIn), then list their id in the event's `members` in `src/constants/events.ts` |
 | Photos | Drop originals in `photos-src/<event>/`, run `npm run photos`, describe each one in `photos-src/<event>/captions.json`, run it again |
 | The page | `src/App.tsx` and `src/styles.css` |
 | The link preview image | `brand/og.html`, then re-render it ([how](docs/RUNBOOK.md#link-preview-image)) |

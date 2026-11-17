@@ -179,6 +179,11 @@ a:hover { text-decoration-thickness: 2px; }
 .event__name { margin: 2px 0 0; font: bold clamp(26px, 2.3vw, 34px)/1.05 var(--mono); letter-spacing: -.06em; }
 .event__facts { margin: 0; color: var(--steel); font: bold 11px/1.5 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 .event__summary { margin: 0; color: var(--soft); font-size: 14px; line-height: 1.65; }
+/* Who is in the photos: names that link to LinkedIn, wrapping onto as many rows as they need. */
+.event__people-label { margin: 0; color: var(--steel); font: bold 11px/1.5 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.event__people ul { display: flex; flex-wrap: wrap; gap: 0 18px; margin: 0; padding: 0; list-style: none; }
+.event__people a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font: bold 13px/1.2 var(--mono); text-underline-offset: 4px; }
+.event__people a:hover { color: var(--gold); }
 .event__link { margin: auto 0 0; padding-top: 8px; }
 .event__link a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 13px; border: 2px solid currentColor; font: bold 12px/1 var(--mono); text-decoration: none; }
 .event__link a:hover { border-color: var(--gold); background: var(--gold); color: var(--navy); }

@@ -12,6 +12,7 @@ const vite = await createServer({ root, server: { middlewareMode: true }, appTyp
 const { club } = await vite.ssrLoadModule('/src/constants/club.ts');
 const { events } = await vite.ssrLoadModule('/src/constants/events.ts');
 const { photos } = await vite.ssrLoadModule('/src/constants/photos.generated.ts');
+const { members } = await vite.ssrLoadModule('/src/constants/members.ts');
 await vite.close();
 const inPublic = path => existsSync(join(root, 'public', path));
 
@@ -22,6 +23,17 @@ test('events have unique slugs and https links', () => {
     assert.ok(event.summary.length > 0, `${event.slug} needs a summary`);
     if (event.link) assert.match(event.link.href, /^https:\/\//);
     if (event.cover) assert.ok(photos.some(photo => photo.event === event.slug && photo.slug === event.cover), `${event.slug}: cover ${event.cover} is not in its photo folder`);
+  }
+});
+
+test('members link to LinkedIn profiles and events name only known members', () => {
+  for (const [id, member] of Object.entries(members)) {
+    assert.ok(member.name.trim(), `${id} needs a name`);
+    assert.match(member.linkedin, /^https:\/\/www\.linkedin\.com\/in\/[^/]+\/$/, `${id}: not a LinkedIn profile URL`);
+  }
+  for (const event of events) {
+    for (const id of event.members ?? []) assert.ok(members[id], `${event.slug}: unknown member ${id}`);
+    assert.equal(new Set(event.members ?? []).size, (event.members ?? []).length, `${event.slug} lists someone twice`);
   }
 });
 

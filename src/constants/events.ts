@@ -1,3 +1,5 @@
+import type { MemberId } from './members';
+
 // Where the club has been. One card per event, in the order listed here.
 //
 // `slug` is also the photo folder: photos-src/<slug>/ in, public/photos/<slug>/ out.
@@ -15,6 +17,8 @@ export type ClubEvent = {
   cover?: string;
   // Cycle the card through every photo in the folder, starting from the cover.
   slideshow?: boolean;
+  // Club members in the event's photos, from members.ts. The card links each to their LinkedIn.
+  members?: MemberId[];
   where?: string;
   when?: string;
   result?: string;
@@ -39,6 +43,7 @@ export const events: ClubEvent[] = [
     slug: 'icpc',
     name: 'ICPC',
     kind: 'Programming contest',
+    members: ['israel', 'parker', 'collin'],
     summary:
       'The International Collegiate Programming Contest. Teams of three share one computer and race through algorithm problems.',
   },
@@ -47,6 +52,7 @@ export const events: ClubEvent[] = [
     name: 'HackGT',
     kind: 'Hackathon',
     where: 'Atlanta, Georgia',
+    members: ['david', 'israel'],
     summary: 'Georgia Tech’s hackathon. We drove down, teamed up and built.',
   },
   {
@@ -54,6 +60,7 @@ export const events: ClubEvent[] = [
     name: 'Hacklanta',
     kind: 'Hackathon',
     where: 'Atlanta, Georgia',
+    members: ['israel', 'parker'],
     summary: 'A hackathon in Atlanta. Our team built ImagineVR there.',
     link: { href: 'https://github.com/Software-Engineering-Club-UNG/ImagineVR', label: 'ImagineVR on GitHub' },
   },
@@ -63,6 +70,7 @@ export const events: ClubEvent[] = [
     kind: 'Hackathon',
     cover: 'pair-coding',
     slideshow: true,
+    members: ['israel', 'parker', 'justin', 'collin'],
     summary: 'A UNG team, a problem statement and a deadline.',
   },
 ];

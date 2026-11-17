@@ -27,6 +27,7 @@ npm run synth     # offline; needs no AWS credentials
 index.html              head metadata (title, description, Open Graph)
 src/constants/club.ts   name, links, email: the single source for page, metadata and JSON-LD
 src/constants/events.ts the events
+src/constants/members.ts club members named on event cards, with their LinkedIn links
 src/constants/photos.generated.ts   written by `npm run photos`; never edit by hand
 src/App.tsx             the page
 src/components/         RetroWindow, BootTerminal, PhotoViewer, PhotoStrip, EventCard

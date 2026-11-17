@@ -1,4 +1,5 @@
 import type { ClubEvent } from '../constants/events';
+import { members } from '../constants/members';
 import type { Photo } from '../constants/photos.generated';
 import CardPhotos from './CardPhotos';
 import RetroWindow from './RetroWindow';
@@ -29,6 +30,18 @@ export default function EventCard({ event, photos }: { event: ClubEvent; photos:
           <h3 className="event__name">{event.name}</h3>
           {facts && <p className="event__facts">{facts}</p>}
           <p className="event__summary">{event.summary}</p>
+          {event.members && event.members.length > 0 && (
+            <div className="event__people">
+              <p className="event__people-label" id={`people-${event.slug}`}>{photos.length > 1 ? 'In the photos' : 'In the photo'}</p>
+              <ul aria-labelledby={`people-${event.slug}`}>
+                {event.members.map(id => (
+                  <li key={id}>
+                    <a href={members[id].linkedin}>{members[id].name}<span className="sr-only"> on LinkedIn</span> <span aria-hidden="true">↗</span></a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {event.link && <p className="event__link"><a href={event.link.href}>{event.link.label} <span aria-hidden="true">↗</span></a></p>}
         </div>
       </RetroWindow>
