@@ -91,9 +91,11 @@ npx cdk deploy SweGithubAccess -c attachDomain=false
 - The first `SweSite` deploy waits for the certificate. It completes once the two validation CNAMEs are in Cloudflare.
 - Copy the stack outputs into the GitHub environment variables above, run **Deploy site**, and check the site on its `cloudfront.net` address.
 - The first deploy needs `-c attachDomain=false`, because `infra/cdk.json` has it `true`. To then put the domain on it:
-  1. Take `codehawks.org` and `www.codehawks.org` off whichever distribution holds them now. CloudFront allows a domain on only one distribution, and the deploy fails with `CNAMEAlreadyExists` until they are free. The site is down from here until step 2 finishes, a few minutes.
-  2. Deploy `SweSite` with `attachDomain` `true`.
-  3. Point the two Cloudflare CNAMEs at the new distribution. CloudFront routes by domain name, so the site works on the new distribution even before this, but the old distribution cannot be deleted until nothing points at it.
+  1. Point the two Cloudflare CNAMEs at the new distribution's `DistributionDomainName`. Nothing changes for visitors yet: CloudFront routes by domain name, so whichever distribution holds `codehawks.org` keeps serving it. Do this first, because CloudFront refuses to add a domain to a distribution while the domain's DNS points at a different one.
+  2. Take `codehawks.org` and `www.codehawks.org` off the distribution that holds them now. CloudFront allows a domain on only one distribution. The site is down from here until step 3 finishes, a minute or two.
+  3. Deploy `SweSite` with `attachDomain` `true`.
+
+  If step 3 fails, put the domain back on the old distribution straight away. CloudFront takes one certificate change at a time, so that waits until step 2 shows `Deployed`, a few minutes.
 
 ## Check that it is healthy
 
