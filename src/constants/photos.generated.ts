@@ -17,4 +17,9 @@ export const photos: Photo[] = [
   { event: "hacklonega", slug: "img-2185", width: 1280, height: 960, thumbWidth: 560, thumbHeight: 420, alt: "A team demos their project on the projector at Hacklonega" },
   { event: "hacklonega", slug: "img-2187", width: 1280, height: 960, thumbWidth: 560, thumbHeight: 420, alt: "A room of students watches the project demos at Hacklonega" },
   { event: "hacklonega", slug: "img-2196", width: 1280, height: 960, thumbWidth: 560, thumbHeight: 420, alt: "The Best Overall winning team stands in front of their award slide at Hacklonega" },
+  { event: "icpc", slug: "contest-floor", width: 1280, height: 960, thumbWidth: 560, thumbHeight: 420, alt: "Three teammates in matching navy contest shirts share one computer at ICPC" },
+  { event: "hackgt", slug: "shirts", width: 800, height: 1067, thumbWidth: 315, thumbHeight: 420, alt: "Three students hold up green HackGT 13 shirts in a photo booth at HackGT" },
+  { event: "hacklanta", slug: "on-stage", width: 1280, height: 853, thumbWidth: 630, thumbHeight: 420, alt: "Four students stand on stage under silver balloon letters spelling Hacklanta" },
+  { event: "codelinc", slug: "deep-focus", width: 886, height: 591, thumbWidth: 630, thumbHeight: 420, alt: "Two students study a laptop screen in deep focus at CodeLinc" },
+  { event: "codelinc", slug: "pair-coding", width: 886, height: 591, thumbWidth: 630, thumbHeight: 420, alt: "Two students work through code together on a laptop at CodeLinc" },
 ];
