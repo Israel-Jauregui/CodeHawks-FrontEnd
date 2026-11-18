@@ -43,7 +43,7 @@ export const events: ClubEvent[] = [
     slug: 'icpc',
     name: 'ICPC',
     kind: 'Programming contest',
-    members: ['israel', 'parker', 'collin'],
+    members: ['israel', 'parker', 'colin'],
     summary:
       'The International Collegiate Programming Contest. Teams of three share one computer and race through algorithm problems.',
   },
@@ -71,7 +71,7 @@ export const events: ClubEvent[] = [
     kind: 'Hackathon',
     cover: 'pair-coding',
     slideshow: true,
-    members: ['israel', 'parker', 'justin', 'collin'],
+    members: ['israel', 'parker', 'justin', 'colin'],
     summary: 'A UNG team, a problem statement and a deadline.',
   },
 ];
