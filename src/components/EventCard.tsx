@@ -1,6 +1,7 @@
 import type { ClubEvent } from '../constants/events';
 import { members } from '../constants/members';
 import type { Photo } from '../constants/photos.generated';
+import { formatDates } from '../lib/format';
 import CardPhotos from './CardPhotos';
 import RetroWindow from './RetroWindow';
 
@@ -10,7 +11,7 @@ import RetroWindow from './RetroWindow';
 export default function EventCard({ event, photos }: { event: ClubEvent; photos: Photo[] }) {
   const cover = photos.find(photo => photo.slug === event.cover) ?? photos[0];
   const shown = event.slideshow ? [cover, ...photos.filter(photo => photo !== cover)] : [cover];
-  const facts = [event.where, event.when].filter(Boolean).join(' // ');
+  const facts = [event.where, event.when && formatDates(event.when)].filter(Boolean).join(' // ');
   return (
     <article className="event" id={`event-${event.slug}`} data-hosted={event.hosted || undefined}>
       <RetroWindow

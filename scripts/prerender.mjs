@@ -1,6 +1,6 @@
 // Runs after `vite build`. Renders the app into dist/index.html, adds the Organization
-// structured data and writes the sitemap, so crawlers and link previews that do not run
-// JavaScript still get the full page. The browser then hydrates this markup.
+// structured data and writes the sitemap and llms.txt, so crawlers, AI assistants and link
+// previews that do not run JavaScript still get everything. The browser then hydrates this markup.
 import { readFile, writeFile } from 'node:fs/promises';
 import { StrictMode, createElement } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -14,6 +14,8 @@ try {
   const { default: App } = await vite.ssrLoadModule('/src/App.tsx');
   const { organizationJsonLd } = await vite.ssrLoadModule('/src/lib/structured-data.ts');
   const { club } = await vite.ssrLoadModule('/src/constants/club.ts');
+  const { photos } = await vite.ssrLoadModule('/src/constants/photos.generated.ts');
+  const { llmsTxt } = await vite.ssrLoadModule('/src/lib/llms-txt.ts');
 
   const template = await readFile(file, 'utf8');
   if (!template.includes(placeholder) || !template.includes('</head>')) throw new Error('dist/index.html is not the expected template.');
@@ -29,15 +31,22 @@ try {
     .replace('</head>', () => `  <script type="application/ld+json">${jsonLd}</script>\n  </head>`)
     .replace(placeholder, () => `<div id="root">${markup}</div>`));
 
+  // Every photo is listed under the page, so image search finds the full-size files.
   const today = new Date().toISOString().slice(0, 10);
+  const images = photos.map(photo => `
+    <image:image>
+      <image:loc>${club.siteUrl}photos/${photo.event}/${photo.slug}.webp</image:loc>
+    </image:image>`).join('');
   await writeFile(new URL('../dist/sitemap.xml', import.meta.url), `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>${club.siteUrl}</loc>
-    <lastmod>${today}</lastmod>
+    <lastmod>${today}</lastmod>${images}
   </url>
 </urlset>
 `);
+
+  await writeFile(new URL('../dist/llms.txt', import.meta.url), llmsTxt());
 } finally {
   await vite.close();
 }

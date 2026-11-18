@@ -13,6 +13,8 @@ const { club } = await vite.ssrLoadModule('/src/constants/club.ts');
 const { events } = await vite.ssrLoadModule('/src/constants/events.ts');
 const { photos } = await vite.ssrLoadModule('/src/constants/photos.generated.ts');
 const { members } = await vite.ssrLoadModule('/src/constants/members.ts');
+const { faq } = await vite.ssrLoadModule('/src/constants/faq.ts');
+const { formatDates } = await vite.ssrLoadModule('/src/lib/format.ts');
 await vite.close();
 const inPublic = path => existsSync(join(root, 'public', path));
 
@@ -24,6 +26,30 @@ test('events have unique slugs and https links', () => {
     if (event.link) assert.match(event.link.href, /^https:\/\//);
     if (event.cover) assert.ok(photos.some(photo => photo.event === event.slug && photo.slug === event.cover), `${event.slug}: cover ${event.cover} is not in its photo folder`);
   }
+});
+
+test('event dates are real ISO dates and read naturally', () => {
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
+  const real = date => iso.test(date) && new Date(`${date}T00:00:00Z`).toISOString().startsWith(date);
+  for (const event of events) {
+    if (!event.when) continue;
+    assert.ok(real(event.when.start), `${event.slug}: start ${event.when.start} is not a YYYY-MM-DD date`);
+    if (event.when.end) {
+      assert.ok(real(event.when.end), `${event.slug}: end ${event.when.end} is not a YYYY-MM-DD date`);
+      assert.ok(event.when.end >= event.when.start, `${event.slug} ends before it starts`);
+    }
+  }
+  assert.equal(formatDates({ start: '2026-10-24' }), 'October 24, 2026');
+  assert.equal(formatDates({ start: '2026-10-09', end: '2026-10-11' }), 'October 9–11, 2026');
+  assert.equal(formatDates({ start: '2026-09-30', end: '2026-10-02' }), 'September 30 – October 2, 2026');
+  assert.equal(formatDates({ start: '2026-12-31', end: '2027-01-01' }), 'December 31, 2026 – January 1, 2027');
+});
+
+test('the IndexNow key file matches the key the deploy sends', () => {
+  const workflow = readFileSync(join(root, '.github/workflows/deploy.yml'), 'utf8');
+  const key = workflow.match(/INDEXNOW_KEY: ([0-9a-f]{32})\n/)?.[1];
+  assert.ok(key, 'no INDEXNOW_KEY in deploy.yml');
+  assert.equal(readFileSync(join(root, 'public', `${key}.txt`), 'utf8'), key);
 });
 
 test('members link to LinkedIn profiles and events name only known members', () => {
@@ -86,6 +112,58 @@ test('the structured data is valid and points at the club’s other pages', buil
   assert.equal(organization.url, club.siteUrl);
   assert.ok(organization.sameAs.includes(club.links.hacklonega));
   assert.ok(graph.some(node => node['@type'] === 'WebSite'));
+
+  // Every member is a Person tied to their LinkedIn and to the club.
+  const people = graph.filter(node => node['@type'] === 'Person');
+  assert.equal(people.length, Object.keys(members).length);
+  for (const person of people) {
+    assert.ok(person.sameAs[0].startsWith('https://www.linkedin.com/in/'), `${person.name} has no LinkedIn`);
+    assert.equal(person.memberOf['@id'], organization['@id']);
+  }
+
+  // Every event in the graph has the dates from events.ts, a place, and is linked from the club.
+  const ids = new Set(graph.map(node => node['@id']));
+  for (const { '@id': id } of organization.event) assert.ok(ids.has(id), `${id} is not in the graph`);
+  for (const node of graph.filter(node => ['Event', 'Hackathon'].includes(node['@type']))) {
+    const event = events.find(event => node['@id'].endsWith(`#event-${event.slug}`));
+    assert.ok(event, `${node['@id']} is not in events.ts`);
+    assert.ok(node.startDate.startsWith(event.when.start), `${event.slug}: start date differs from events.ts`);
+    assert.ok(node.endDate.startsWith(event.when.end ?? event.when.start), `${event.slug}: end date differs from events.ts`);
+    assert.ok(node.location?.address, `${event.slug} has no address`);
+    for (const ref of node.attendee ?? []) assert.ok(ids.has(ref['@id']), `${event.slug}: attendee ${ref['@id']} is not in the graph`);
+  }
+
+  // The FAQ markup says exactly what the page says.
+  const faqPage = graph.find(node => node['@type'] === 'FAQPage');
+  assert.deepEqual(faqPage.mainEntity.map(q => [q.name, q.acceptedAnswer.text]), faq.map(item => [item.question, item.answer]));
+});
+
+test('the page answers the common questions', built, () => {
+  assert.ok(faq.length > 0);
+  for (const { question, answer } of faq) {
+    assert.ok(text.includes(question), `the page does not ask "${question}"`);
+    assert.ok(text.includes(answer), `the page does not answer "${question}"`);
+  }
+  for (const event of events.filter(event => event.when)) assert.ok(text.includes(formatDates(event.when)), `${event.slug}: date not on the page`);
+});
+
+test('the sitemap lists the page and every photo', built, () => {
+  const sitemap = readFileSync(join(root, 'dist/sitemap.xml'), 'utf8');
+  assert.ok(sitemap.includes(`<loc>${club.siteUrl}</loc>`));
+  for (const photo of photos) assert.ok(sitemap.includes(`<image:loc>${club.siteUrl}photos/${photo.event}/${photo.slug}.webp</image:loc>`), `${photo.slug} is not in the sitemap`);
+});
+
+test('llms.txt sums up the club for AI assistants', built, () => {
+  const llms = readFileSync(join(root, 'dist/llms.txt'), 'utf8');
+  assert.ok(llms.startsWith(`# ${club.name}\n\n> `), 'llms.txt needs a title and a one-paragraph summary');
+  assert.ok(!llms.includes('undefined'), 'llms.txt has an empty value in it');
+  for (const url of [club.siteUrl, club.links.discord, club.links.connect, club.links.github, club.links.linkedin]) assert.ok(llms.includes(url), `llms.txt has no link to ${url}`);
+  for (const event of events) {
+    assert.ok(llms.includes(`[${event.name}]`), `llms.txt does not list ${event.name}`);
+    if (event.when) assert.ok(llms.includes(formatDates(event.when)), `llms.txt has no date for ${event.name}`);
+  }
+  for (const member of Object.values(members)) assert.ok(llms.includes(`[${member.name}](${member.linkedin})`), `llms.txt does not list ${member.name}`);
+  for (const { question, answer } of faq) assert.ok(llms.includes(`### ${question}\n\n${answer}`), `llms.txt does not answer "${question}"`);
 });
 
 test('nothing in the page breaks the Content Security Policy', built, () => {

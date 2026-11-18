@@ -1,17 +1,24 @@
 # Getting found
 
-What the site already does to rank for the club's name, and the short list of things only a person with the right login can do.
+What the site already does to rank for the club's name and to be known by AI assistants, and the short list of things only a person with the right login can do.
 
 ## Built into the site
 
 - **A title and description that say the name people search for.** "Software Engineering Club @ UNG | University of North Georgia", with Dahlonega, hackathons and programming contests in the description.
 - **Everything is in the HTML.** The page is prerendered, so search engines and link previews read all of it without running JavaScript.
-- **Structured data.** A schema.org `Organization` block names the club, its alternate and former names, the university, and its Discord, UNG Connect, LinkedIn, GitHub and hacklonega.dev pages. This is what lets a search engine connect those pages to one club.
+- **Structured data.** A schema.org graph names the club, its alternate and former names, its founding year, the university (tied to its Wikipedia and Wikidata entries), and its Discord, UNG Connect, LinkedIn, GitHub and hacklonega.dev pages. This is what lets a search engine connect those pages to one club. It also lists:
+  - each member as a `Person` linked to their LinkedIn, so their names lead back to the club;
+  - the events, with dates, places and who went. An event the club attended joins once it has both `when` and `where`, because search engines treat an event without a place as broken markup;
+  - the FAQ, word for word.
+- **A FAQ.** Who can join, what it costs, whether you need experience, how to join, when the club started. Short, self-contained answers are what search engines and AI assistants quote. Edit them in `src/constants/faq.ts`.
+- **`/llms.txt`.** The club in plain Markdown for AI assistants and agents, following [llmstxt.org](https://llmstxt.org/): summary, how to join, the FAQ, events, members and links. Built from the same constants as the page, so it never goes stale.
+- **AI crawlers are welcome.** `robots.txt` allows every crawler, and Cloudflare stays DNS-only (grey cloud), so its AI-bot blocking never applies. Keep it that way: an assistant can only describe the club if its crawler can read the page.
+- **Bing hears about every deploy.** The deploy pings [IndexNow](https://www.indexnow.org/) after publishing, so Bing recrawls within hours. Bing feeds ChatGPT search, Copilot and DuckDuckGo. The key lives in `public/<key>.txt` and `INDEXNOW_KEY` in `deploy.yml`, and a test checks they match.
 - **The old names still lead here.** "App Development Club" and "CodingWarriors" appear once in the footer and in the structured data, so searches for them find the new club.
 - **Old links still work.** `/projects`, `/team`, `/members` and the other pages of the old platform redirect to the home page with a 301, which passes their search standing along.
 - **Photos carry descriptions.** Every photo has alt text saying what it shows and where, which is how image search finds them.
 - **It is fast.** No web fonts, no third-party scripts, sized and lazy-loaded WebP images, long cache lifetimes.
-- **A sitemap and robots.txt**, with the sitemap's date updated on every build.
+- **A sitemap and robots.txt**, with the sitemap's date updated on every build and every photo listed in it for image search.
 - **codehawks.org and hacklonega.dev link to each other.**
 
 ## Do once, after launch
@@ -25,7 +32,8 @@ What the site already does to rank for the club's name, and the short list of th
 
 ## Keep doing
 
-- **Add photos and results after every event.** A page that changes gets crawled more often, and each new photo is another way in from image search. Fill in `when` and `result` in `src/constants/events.ts`.
+- **Add photos and results after every event.** A page that changes gets crawled more often, and each new photo is another way in from image search. Fill in `when`, `where` and `result` in `src/constants/events.ts`. ICPC and CodeLinc still need a `where`.
+- **Later: a Wikidata entry for the club.** It is the most direct way into the knowledge graphs Google and AI assistants use. It needs a person with a Wikidata account; once it exists, add its URL to the club's `sameAs` in `src/lib/structured-data.ts`.
 - **Ask for links.** Every hackathon the club attends has a site, a Devpost or an MLH page; put `https://codehawks.org/` in team and project profiles. Ask the Computer Science department to list the club on its student organizations page.
 - **Use the same name everywhere.** "Software Engineering Club @ UNG" on Discord, LinkedIn, GitHub and UNG Connect. Consistent names are how search engines decide the pages are one organization.
 - **Link the site from club repositories.** Each README that mentions the club should link to it.
