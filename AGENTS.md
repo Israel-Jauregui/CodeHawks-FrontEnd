@@ -28,11 +28,15 @@ index.html              head metadata (title, description, Open Graph)
 src/constants/club.ts   name, links, email: the single source for page, metadata and JSON-LD
 src/constants/events.ts the events
 src/constants/members.ts club members named on event cards, with their LinkedIn links
+src/constants/faq.ts    the questions and answers, shown on the page and repeated in the JSON-LD and llms.txt
+src/lib/structured-data.ts  the JSON-LD: the club, its members, its events, the FAQ
+src/lib/llms-txt.ts     /llms.txt, the club in Markdown for AI assistants
 src/constants/photos.generated.ts   written by `npm run photos`; never edit by hand
 src/App.tsx             the page
 src/components/         RetroWindow, BootTerminal, PhotoViewer, PhotoStrip, EventCard
 src/styles.css          all styling
-scripts/prerender.mjs   renders the page into dist/index.html, adds JSON-LD, writes the sitemap
+scripts/prerender.mjs   renders the page into dist/index.html, adds JSON-LD, writes the sitemap and llms.txt
+public/<32 hex>.txt     the IndexNow key; must match INDEXNOW_KEY in deploy.yml
 infra/                  AWS CDK app (TypeScript, run with tsx)
 ```
 
@@ -40,7 +44,7 @@ infra/                  AWS CDK app (TypeScript, run with tsx)
 
 - **Look.** Follow the [club styling guide](https://github.com/Software-Engineering-Club-UNG/club-styling-guide), Typewriter look: Night blue page, Courier New for titles and labels, Tahoma or Verdana for sentences, square corners, hard offset shadows with no blur, one gold title. Use the palette variables at the top of `src/styles.css`; do not add colors or web fonts. The club logo files in `public/brand/` are used unaltered.
 - **Voice.** Write like a commit message: short, specific, present tense. Name the club "Software Engineering Club" first, "SWE" after. "CodeHawks" is only the domain and a detail in window title bars. The old names (App Development Club, CodingWarriors) appear in exactly one footer line and the structured data.
-- **Facts.** Do not invent event dates, results or meeting times. `when` and `result` in `events.ts` stay empty until someone supplies them. The site does not list a meeting schedule; it points to Discord and UNG Connect.
+- **Facts.** Do not invent event dates, places, results, meeting times or FAQ answers. `when`, `where` and `result` in `events.ts` stay empty until someone supplies them. The site does not list a meeting schedule; it points to Discord and UNG Connect. The page, the JSON-LD and llms.txt are all built from the constants, so a fact goes in one place and shows up in all three.
 - **No inline styles or scripts.** The Content Security Policy is `default-src 'none'` with only same-origin scripts, styles and images. A React `style` prop, a `<style>` tag, a web font or any third-party URL will be blocked in production. The build fails on a `style` attribute. Styling goes in `src/styles.css`; if a value must be computed, set it from an effect with `element.style.setProperty` as `PhotoStrip.tsx` does. A change to what the page loads needs the same change in `infra/lib/config.ts`.
 - **Everything is in the HTML.** The page is prerendered so search engines and link previews get all of it. Render content on the server pass, not only in effects, and keep the seeded starfield deterministic.
 - **Accessibility.** Alt text on every image, tap targets at least 44px, visible focus, and every animation switched off under `prefers-reduced-motion`.

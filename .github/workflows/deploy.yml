@@ -43,6 +43,8 @@ jobs:
       RUN_ID: ${{ inputs.ci_run_id || github.event.workflow_run.id }}
       BUCKET: ${{ vars.S3_BUCKET }}
       DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+      # IndexNow key. Public by design: it is also served at /<key>.txt to prove the site is ours.
+      INDEXNOW_KEY: 717db336edf0456142bbdc9425a676c8
     steps:
       # Deploy only an artifact built by ci.yml from a push to main in this repo.
       - name: Verify source CI run
@@ -79,6 +81,8 @@ jobs:
           test -f dist/index.html
           test -f dist/404.html
           test -f dist/sitemap.xml
+          test -f dist/llms.txt
+          test "$(cat "dist/$INDEXNOW_KEY.txt")" = "$INDEXNOW_KEY"
           ls dist/assets/*.js >/dev/null
 
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
@@ -96,7 +100,13 @@ jobs:
           aws s3 sync dist "s3://$BUCKET" --only-show-errors --delete \
             --exclude "assets/*" --exclude "index.html" \
             --cache-control "public, max-age=3600"
-          # 3. index.html last, so it never references assets that are not uploaded yet.
+          # 3. Text files again with a charset, which the type S3 guesses leaves out. Without it
+          #    some readers garble the curly quotes in llms.txt.
+          for file in dist/*.txt; do
+            aws s3 cp "$file" "s3://$BUCKET/${file#dist/}" --only-show-errors \
+              --cache-control "public, max-age=3600" --content-type "text/plain; charset=utf-8"
+          done
+          # 4. index.html last, so it never references assets that are not uploaded yet.
           aws s3 cp dist/index.html "s3://$BUCKET/index.html" --only-show-errors \
             --cache-control "no-cache" --content-type "text/html; charset=utf-8"
 
@@ -104,3 +114,20 @@ jobs:
             --paths "/*" --query Invalidation.Id --output text)"
           aws cloudfront wait invalidation-completed --distribution-id "$DISTRIBUTION_ID" --id "$inv"
           echo "Published (invalidation $inv)" >> "$GITHUB_STEP_SUMMARY"
+
+      # Tell Bing (and the other IndexNow engines) the site changed, so it recrawls within hours
+      # instead of weeks. Bing feeds ChatGPT search, Copilot and DuckDuckGo. A failed ping only
+      # means a slower recrawl, so it never fails the deploy.
+      - name: Ping IndexNow
+        continue-on-error: true
+        run: |
+          body="$(jq -n --arg key "$INDEXNOW_KEY" '{
+            host: "codehawks.org",
+            key: $key,
+            keyLocation: "https://codehawks.org/\($key).txt",
+            urlList: ["https://codehawks.org/", "https://codehawks.org/llms.txt"]
+          }')"
+          status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 -X POST https://api.indexnow.org/indexnow \
+            -H 'Content-Type: application/json; charset=utf-8' --data "$body")"
+          echo "IndexNow answered $status" >> "$GITHUB_STEP_SUMMARY"
+          [[ "$status" == 200 || "$status" == 202 ]]

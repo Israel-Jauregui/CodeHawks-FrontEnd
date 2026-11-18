@@ -32,7 +32,8 @@ npm run dev
 | To change | Edit |
 | --- | --- |
 | The club's name, links or email | `src/constants/club.ts` |
-| The events, their dates and results | `src/constants/events.ts` |
+| The events, their dates and results | `src/constants/events.ts` (dates as `{ start: '2026-10-09', end: '2026-10-11' }`) |
+| The questions and answers | `src/constants/faq.ts` |
 | Who's in an event's photos | Add the person to `src/constants/members.ts` (name and LinkedIn), then list their id in the event's `members` in `src/constants/events.ts` |
 | Photos | Drop originals in `photos-src/<event>/`, run `npm run photos`, describe each one in `photos-src/<event>/captions.json`, run it again |
 | The page | `src/App.tsx` and `src/styles.css` |

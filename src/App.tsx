@@ -1,5 +1,6 @@
 import { club } from './constants/club';
 import { events } from './constants/events';
+import { faq } from './constants/faq';
 import { photos } from './constants/photos.generated';
 import BootTerminal from './components/BootTerminal';
 import EventCard from './components/EventCard';
@@ -9,13 +10,13 @@ import PhotoViewer from './components/PhotoViewer';
 import RetroWindow from './components/RetroWindow';
 import Starfield from './components/Starfield';
 import SteepleSpinner from './components/SteepleSpinner';
+import { list } from './lib/format';
 
 const eventNames = Object.fromEntries(events.map(event => [event.slug, event.name]));
 const photosOf = (slug: string) => photos.filter(photo => photo.event === slug);
 // Open the viewer on the teams with their shirts in front of the UNG screen.
 const viewerStart = Math.max(0, photos.findIndex(photo => photo.slug === 'img-2142'));
 
-const list = (names: string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
 const shown = events.filter(event => photosOf(event.slug).length).map(event => event.name);
 const pending = events.filter(event => !photosOf(event.slug).length).map(event => event.name);
 const readme = [
@@ -62,6 +63,7 @@ export default function App() {
             <a className="nav-link" href="#about">About</a>
             <a className="nav-link" href="#events">Events</a>
             <a className="nav-link" href="#photos">Photos</a>
+            <a className="nav-link" href="#faq">FAQ</a>
             <a className="button button--primary button--small" href={club.links.discord}>Discord <Arrow /></a>
           </nav>
         </header>
@@ -134,6 +136,23 @@ export default function App() {
               <PhotoStrip photos={photos} names={eventNames} />
             </section>
           )}
+
+          <section className="section" id="faq" aria-labelledby="faq-heading">
+            <div className="section-head">
+              <p className="eyebrow">Questions</p>
+              <h2 id="faq-heading">Before you show up.</h2>
+            </div>
+            <RetroWindow className="faq" title={<><span className="win__dir">C:\CODEHAWKS\</span>FAQ.TXT</>}>
+              <dl className="faq__list">
+                {faq.map(item => (
+                  <div className="faq__item" key={item.question}>
+                    <dt>{item.question}</dt>
+                    <dd>{item.answer}</dd>
+                  </div>
+                ))}
+              </dl>
+            </RetroWindow>
+          </section>
 
           <section className="section" id="join" aria-labelledby="join-heading">
             <div className="join">
