@@ -3,7 +3,7 @@
 export const members = {
   israel: { name: 'Israel Jauregui', linkedin: 'https://www.linkedin.com/in/israeljaureguics/' },
   parker: { name: 'Parker Campellone', linkedin: 'https://www.linkedin.com/in/parker-campellone/' },
-  collin: { name: 'Collin Perry', linkedin: 'https://www.linkedin.com/in/colinwperry/' },
+  colin: { name: 'Colin Perry', linkedin: 'https://www.linkedin.com/in/colinwperry/' },
   justin: { name: 'Justin Perdew', linkedin: 'https://www.linkedin.com/in/justin-perdew/' },
   david: { name: 'David Popescu', linkedin: 'https://www.linkedin.com/in/david-popescu-44330b347/' },
 } as const;
